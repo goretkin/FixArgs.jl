@@ -3,6 +3,7 @@
 Documentation for Curry.jl
 
 ```@meta
+CurrentModule = Curry
 DocTestSetup = quote
     using Curry
 end
