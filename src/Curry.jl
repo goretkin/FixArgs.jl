@@ -5,6 +5,14 @@ export Bind, @bind
 
 """
 Return a `Tuple` that interleaves `args` into the `nothing` slots of `slots`.
+
+```jldoctest
+Curry.interleave((:a, nothing, :c), (3,))
+
+# output
+
+(:a, 2, :c)
+```
 """
 interleave(bind, args) = _interleave(first(bind), tail(bind), args)
 interleave(bind::Tuple{}, args::Tuple{}) = ()
