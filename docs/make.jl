@@ -1,6 +1,8 @@
 using Documenter
 using Curry
 
+DocMeta.setdocmeta!(Curry, :DocTestSetup, :(using Curry); recursive=true)
+
 makedocs(
     sitename = "Curry",
     format = Documenter.HTML(),

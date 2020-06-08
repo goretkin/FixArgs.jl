@@ -7,7 +7,7 @@ export Bind, @bind
 Return a `Tuple` that interleaves `args` into the `nothing` slots of `slots`.
 
 ```jldoctest
-Curry.interleave((:a, nothing, :c), (3,))
+Curry.interleave((:a, nothing, :c), (2,))
 
 # output
 
