@@ -6,11 +6,9 @@ export Bind, @bind
 """
 Return a `Tuple` that interleaves `args` into the `nothing` slots of `slots`.
 """
-function interleave(slots, args) end
-
+interleave(bind, args) = _interleave(first(bind), tail(bind), args)
 interleave(bind::Tuple{}, args::Tuple{}) = ()
 interleave(bind::Tuple{}, args::Tuple) = error("more args than positions")
-interleave(bind, args) = _interleave(first(bind), tail(bind), args)
 
 # `nothing` indicates a position to be bound
 _interleave(firstbind::Nothing, tailbind::Tuple, args::Tuple) = (
