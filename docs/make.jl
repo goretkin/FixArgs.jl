@@ -4,9 +4,17 @@ using Curry
 DocMeta.setdocmeta!(Curry, :DocTestSetup, :(using Curry); recursive=true)
 
 makedocs(
-    sitename = "Curry",
-    format = Documenter.HTML(),
     modules = [Curry]
+    sitename = "Curry",
+    repo="https://github.com/goretkin/Curry.jl/blob/{commit}{path}#L{line}",
+    sitename="Curry.jl",
+    format=Documenter.HTML(;
+        prettyurls=get(ENV, "CI", "false") == "true",
+        assets=String[],
+    ),
+    pages=[
+        "Home" => "index.md",
+    ],
 )
 
 # Documenter can also automatically deploy documentation to gh-pages.
