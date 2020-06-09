@@ -19,4 +19,5 @@ makedocs(
 
 deploydocs(
     repo = "github.com/goretkin/Curry.jl.git",
+    deploy_config = Documenter.GitHubActions()
 )
