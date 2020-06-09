@@ -7,11 +7,21 @@ export Bind, @bind
 Return a `Tuple` that interleaves `args` into the `nothing` slots of `slots`.
 
 ```jldoctest
-Curry.interleave((:a, nothing, :c), (2,))
+Curry.interleave((:a, nothing, :c, nothing), (12, 34))
 
 # output
 
-(:a, 2, :c)
+(:a, 12, :c, 34)
+```
+
+Use `Some` to escape `nothing`
+
+```jldoctest
+Curry.interleave((:a, Some(nothing), :c, nothing), (34,))
+
+# output
+
+(:a, nothing, :c, 34)
 ```
 """
 interleave(bind, args) = _interleave(first(bind), tail(bind), args)
@@ -29,6 +39,29 @@ _interleave(firstbind::Some{T}, tailbind::Tuple, args::Tuple) where T = (
 _interleave(firstbind::T, tailbind::Tuple, args::Tuple) where T = (
   firstbind, interleave(tailbind, args)...)
 
+"""
+Represent a function call, with partially bound arguments.
+
+```jldoctest
+b = Bind(+, (1, 2))
+b()
+
+# output
+
+3
+```
+
+```jldoctest
+b = Bind(*, ("hello", nothing))
+b(", world")
+
+# output
+
+"hello, world"
+```
+
+`Bind(f, (g(), h()))` is like `:(f(g(), h()))` but `f` `g` and `h` are lexically scoped, and `g()` and `h()` are evaluated eagerly.
+"""
 struct Bind{F, A} <: Function
     f::F
     a::A
@@ -40,6 +73,8 @@ end
 
 """
 `@bind f(a,b)` is equivalent to `Bind(f, (a, b))`
+
+TODO generalize to not 2 arguments
 """
 macro bind(ex)
     ex.head == :call || error()
