@@ -4,10 +4,9 @@ using Curry
 DocMeta.setdocmeta!(Curry, :DocTestSetup, :(using Curry); recursive=true)
 
 makedocs(
-    modules = [Curry]
-    sitename = "Curry",
-    repo="https://github.com/goretkin/Curry.jl/blob/{commit}{path}#L{line}",
+    modules = [Curry],
     sitename="Curry.jl",
+    repo="https://github.com/goretkin/Curry.jl/blob/{commit}{path}#L{line}",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         assets=String[],
