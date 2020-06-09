@@ -9,6 +9,7 @@ makedocs(
     repo="https://github.com/goretkin/Curry.jl/blob/{commit}{path}#L{line}",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
+        canonical="https://goretkin.gitlab.io/Curry.jl",
         assets=String[],
     ),
     pages=[
