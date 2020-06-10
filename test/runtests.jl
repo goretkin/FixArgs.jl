@@ -41,9 +41,12 @@ using Test
 
 
     is3 = Bind(==, (3, nothing))
+    @test false == @inferred is3(4)
     isnothing2 = Bind(===, (Some(nothing), nothing))
 
     @test isnothing2(nothing)
     @test isnothing2(:notnothing) == false
 
+    b = @bind "hey" * nothing * "there"
+    @test b(", you, ") == "hey, you, there"
 end

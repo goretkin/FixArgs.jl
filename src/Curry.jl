@@ -72,18 +72,18 @@ function (c::Bind)(args...)
 end
 
 """
-`@bind f(a,b)` is equivalent to `Bind(f, (a, b))`
+`bind(f, a, b)` is equivalent to Bind(f, (a, b))
+"""
+bind(f, args...) = Bind(f, args)
 
-TODO generalize to not 2 arguments
+"""
+`@bind f(a,b)` macroexpands to `bind(f, a, b)`
+
 """
 macro bind(ex)
     ex.head == :call || error()
-    f = ex.args[1]
-    x = tuple(ex.args[2:end]...)
-    quote
-        Bind($(f), ($(esc(x[1])), $(esc(x[2])))) # TODO how to use splatting to generalize to n arguments
-    end
+    # `ex.args[1]` is the function and `ex.args[2:end]` are the positional arguments
+    return :(bind($(map(esc, ex.args)...)))
 end
-
 
 end
