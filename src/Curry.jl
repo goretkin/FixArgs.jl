@@ -62,19 +62,20 @@ b(", world")
 
 `Bind(f, (g(), h()))` is like `:(f(g(), h()))` but `f` `g` and `h` are lexically scoped, and `g()` and `h()` are evaluated eagerly.
 """
-struct Bind{F, A} <: Function
+struct Bind{F, A, K} <: Function
     f::F
     a::A
+    k::K
 end
 
-function (c::Bind)(args...)
-    c.f(interleave(c.a, args)...)
+function (c::Bind)(args...; kw...)
+    c.f(interleave(c.a, args)...; c.k..., kw...)
 end
 
 """
 `bind(f, a, b)` is equivalent to Bind(f, (a, b))
 """
-bind(f, args...) = Bind(f, args)
+bind(f, args...; kw...) = Bind(f, args, kw)
 
 """
 `@bind f(a,b)` macroexpands to `bind(f, a, b)`
@@ -83,7 +84,8 @@ bind(f, args...) = Bind(f, args)
 macro bind(ex)
     ex.head == :call || error()
     # `ex.args[1]` is the function and `ex.args[2:end]` are the positional arguments
-    return :(bind($(map(esc, ex.args)...)))
+    TODO_HANDLE_KW = ()
+    return :($bind($(map(esc, ex.args)...)))
 end
 
 end

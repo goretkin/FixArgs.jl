@@ -1,5 +1,26 @@
 using Curry
+using Curry: bind
 using Test
+
+@testset "keywords" begin
+    @test bind(≈, 1, nothing, atol=1.1)(2)
+    @test bind(≈, 1, nothing, )(2, atol=1.1)
+    @test !bind(≈, 1, nothing, atol=1.1)(2, atol=0.9)
+    @test !bind(≈, 1, nothing, atol=0.9)(2)
+    @test bind(≈, 1, nothing, atol=0.9)(2, atol=1.1)
+    @test bind(≈, 1, nothing, atol=0.9)(2, atol=2)
+
+    @test bind(≈, nothing, nothing, atol=1.1)(1,2)
+    @test !bind(≈, nothing, nothing, atol=0.9)(1,2)
+    a2 = @inferred bind(≈, nothing, nothing)
+    b2 = @inferred bind(≈, nothing, nothing, atol=1)
+    c2 = @inferred bind(≈, nothing, nothing, atol=1, rtol=2)
+    a1 = @inferred bind(≈, 3, nothing, atol=1, rtol=2)
+    @inferred a2(1,2)
+    @inferred b2(1,2)
+    @inferred c2(1,2)
+    @inferred a1(1.0)
+end
 
 @testset "Bind.jl" begin
 
@@ -40,9 +61,9 @@ using Test
     @test eager == lazy
 
 
-    is3 = Bind(==, (3, nothing))
+    is3 = bind(==, 3, nothing)
     @test false == @inferred is3(4)
-    isnothing2 = Bind(===, (Some(nothing), nothing))
+    isnothing2 = Bind(===, (Some(nothing), nothing), ())
 
     @test isnothing2(nothing)
     @test isnothing2(:notnothing) == false
