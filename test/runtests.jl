@@ -73,5 +73,9 @@ end
     @test b(", you, ") == "hey, you, there"
 end
 
-using Documenter: doctest
+using Documenter: DocMeta, doctest
+
+# implicit `using Curry` in every doctest
+DocMeta.setdocmeta!(Curry, :DocTestSetup, :(using Curry); recursive=true)
+
 doctest(Curry)
