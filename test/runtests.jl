@@ -2,6 +2,7 @@ using Curry
 using Curry: bind
 using Test
 
+
 @testset "keywords" begin
     @test bind(≈, 1, nothing, atol=1.1)(2)
     @test bind(≈, 1, nothing, )(2, atol=1.1)
@@ -71,3 +72,6 @@ end
     b = @bind "hey" * nothing * "there"
     @test b(", you, ") == "hey, you, there"
 end
+
+using Documenter: doctest
+doctest(Curry)
