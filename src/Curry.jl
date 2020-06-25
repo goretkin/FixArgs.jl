@@ -1,7 +1,7 @@
 module Curry
 
 using Base: tail
-export Bind, @bind
+export Fix, @fix, fix
 
 """
 Return a `Tuple` that interleaves `args` into the `nothing` slots of `slots`.
@@ -42,42 +42,42 @@ _interleave(firstbind::T, tailbind::Tuple, args::Tuple) where T = (
 """
 Represent a function call, with partially bound arguments.
 """
-struct Bind{F, A, K} <: Function
+struct Fix{F, A, K} <: Function
     f::F
     a::A
     k::K
 end
 
-function (c::Bind)(args...; kw...)
+function (c::Fix)(args...; kw...)
     c.f(interleave(c.a, args)...; c.k..., kw...)
 end
 
 """
-    `bind(f, a, b)`
-    `bind(f, args...; kw...)`
+    `fix(f, a, b)`
+    `fix(f, args...; kw...)`
 
-The `bind` function partially evaluates `f` by binding some of its arguments.
+The `fix` function partially evaluates `f` by fix some of its arguments.
 Positional arguments of `f` that should not be bound are indicated by passing `nothing`
-to `bind` at the respective position.
+to `fix` at the respective position.
 ```jldoctest
-julia> using Curry: bind
+julia> using Curry: fix
 
-julia> b = bind(+, 1, 2); # no nothing, all arguments bound
+julia> b = fix(+, 1, 2); # no nothing, all arguments bound
 
 julia> b()
 3
 
-julia> b = bind(*, "hello", nothing); # only first argument bound
+julia> b = fix(*, "hello", nothing); # only first argument bound
 
 julia> b(", world")
 "hello, world"
 
-julia> b = bind(=>, nothing, 1); # second argument bound
+julia> b = fix(=>, nothing, 1); # second argument bound
 
 julia> b("one")
 "one" => 1
 
-julia> b = bind(isapprox, nothing, nothing, atol=100); # only atol keyword bound
+julia> b = fix(isapprox, nothing, nothing, atol=100); # only atol keyword bound
 
 julia> b(10, 20)
 true
@@ -86,16 +86,16 @@ julia> b(10, 20, atol=1) # keywords can be reassigned on the fly
 false
 ```
 """
-bind(f, args...; kw...) = Bind(f, args, kw)
+fix(f, args...; kw...) = Fix(f, args, kw)
 
 """
-`@bind f(a,b)` macroexpands to `bind(f, a, b)`
+`@fix f(a,b)` macroexpands to `fix(f, a, b)`
 
 """
-macro bind(ex)
+macro fix(ex)
     ex.head == :call || error()
     # `ex.args[1]` is the function and `ex.args[2:end]` are the positional arguments
-    return :($bind($(map(esc, ex.args)...)))
+    return :($fix($(map(esc, ex.args)...)))
 end
 
 end
