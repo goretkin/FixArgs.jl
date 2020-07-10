@@ -48,6 +48,8 @@ struct Fix{F, A, K} <: Function
     k::K
 end
 
+Fix(::Type{T}, a, k) where {T} = Fix{Type{T}, typeof(a), typeof(k)}(T, a, k)
+
 function (c::Fix)(args...; kw...)
     c.f(interleave(c.a, args)...; c.k..., kw...)
 end

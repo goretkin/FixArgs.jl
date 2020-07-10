@@ -22,6 +22,11 @@ using Test
     @inferred a1(1.0)
 end
 
+@testset "fix(::Type, ...)" begin
+    f = @inferred fix(CartesianIndex, nothing, Some(1))
+    @test @inferred(f(2)) === CartesianIndex(2, 1)
+end
+
 @testset "Fix.jl" begin
 
     #=
