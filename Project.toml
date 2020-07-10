@@ -1,4 +1,4 @@
-name = "Curry"
+name = "FixArgs"
 uuid = "5d8a8d4b-09a6-4f10-9cda-cb42fab7536d"
 authors = ["Gustavo Goretkin <gustavo.goretkin@gmail.com> and contributors"]
 version = "0.1.0"

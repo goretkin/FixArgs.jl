@@ -1,4 +1,4 @@
-using Curry
+using FixArgs
 using Test
 
 
@@ -83,7 +83,7 @@ end
 
 using Documenter: DocMeta, doctest
 
-# implicit `using Curry` in every doctest
-DocMeta.setdocmeta!(Curry, :DocTestSetup, :(using Curry); recursive=true)
+# implicit `using FixArgs` in every doctest
+DocMeta.setdocmeta!(FixArgs, :DocTestSetup, :(using FixArgs); recursive=true)
 
-doctest(Curry)
+doctest(FixArgs)

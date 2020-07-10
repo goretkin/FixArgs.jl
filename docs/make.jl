@@ -1,15 +1,15 @@
 using Documenter
-using Curry
+using FixArgs
 
-DocMeta.setdocmeta!(Curry, :DocTestSetup, :(using Curry); recursive=true)
+DocMeta.setdocmeta!(FixArgs, :DocTestSetup, :(using FixArgs); recursive=true)
 
 makedocs(
-    modules = [Curry],
-    sitename="Curry.jl",
-    repo="https://github.com/goretkin/Curry.jl/blob/{commit}{path}#L{line}",
+    modules = [FixArgs],
+    sitename="FixArgs.jl",
+    repo="https://github.com/goretkin/FixArgs.jl/blob/{commit}{path}#L{line}",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://goretkin.gitlab.io/Curry.jl",
+        canonical="https://goretkin.gitlab.io/FixArgs.jl",
         assets=String[],
     ),
     pages=[
@@ -18,6 +18,6 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/goretkin/Curry.jl.git",
+    repo = "github.com/goretkin/FixArgs.jl.git",
     deploy_config = Documenter.GitHubActions()
 )

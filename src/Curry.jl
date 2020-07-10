@@ -1,4 +1,4 @@
-module Curry
+module FixArgs
 
 using Base: tail
 export Fix, @fix, fix
@@ -7,7 +7,7 @@ export Fix, @fix, fix
 Return a `Tuple` that interleaves `args` into the `nothing` slots of `slots`.
 
 ```jldoctest
-Curry.interleave((:a, nothing, :c, nothing), (12, 34))
+FixArgs.interleave((:a, nothing, :c, nothing), (12, 34))
 
 # output
 
@@ -17,7 +17,7 @@ Curry.interleave((:a, nothing, :c, nothing), (12, 34))
 Use `Some` to escape `nothing`
 
 ```jldoctest
-Curry.interleave((:a, Some(nothing), :c, nothing), (34,))
+FixArgs.interleave((:a, Some(nothing), :c, nothing), (34,))
 
 # output
 
@@ -62,7 +62,7 @@ The `fix` function partially evaluates `f` by fix some of its arguments.
 Positional arguments of `f` that should not be bound are indicated by passing `nothing`
 to `fix` at the respective position.
 ```jldoctest
-julia> using Curry: fix
+julia> using FixArgs: fix
 
 julia> b = fix(+, 1, 2); # no nothing, all arguments bound
 

@@ -1,15 +1,15 @@
-# Curry.jl
+# FixArgs.jl
 
-Documentation for Curry.jl
+Documentation for FixArgs.jl
 
 ```@meta
-CurrentModule = Curry
+CurrentModule = FixArgs
 DocTestSetup = quote
-    using Curry
+    using FixArgs
 end
 ```
 
 ```@autodocs
-Modules = [Curry]
+Modules = [FixArgs]
 Order   = [:function, :type]
 ```
