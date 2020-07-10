@@ -22,6 +22,15 @@ using Test
     @inferred a1(1.0)
 end
 
+@testset "fix(::Type, ...)" begin
+    f = @inferred fix(CartesianIndex, nothing, Some(1))
+    @test @inferred(f(2)) === CartesianIndex(2, 1)
+
+    modulo(x; by) = mod(x, by)
+    g = @inferred fix(modulo, nothing, by = UInt8)
+    @test_broken @inferred(g(271)) === 0x0f
+end
+
 @testset "Fix.jl" begin
 
     #=
