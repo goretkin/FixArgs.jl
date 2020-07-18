@@ -1,7 +1,6 @@
 using FixArgs
 using Test
 
-
 @testset "basics" begin
     @test  fix(≈, Some(1), nothing, atol=1.1)(2)
     @test  fix(≈, Some(1), nothing, )(2, atol=1.1)
@@ -28,6 +27,15 @@ using Test
     @test @fix(+(_, xs...))(2) === 2 + 1 + 2
     @test @fix(_ + 1 + _)(2,2) === 2 + 1 + 2
 
+    kw = (atol=1, rtol=0)
+    @test  (@fix ≈(_,_;kw...))(1,2)
+    @test !(@fix ≈(_,_;kw...))(1,2.1)
+
+    f(args...; kw...) = (args, kw.data)
+    @test (@fix f(1, _, 3, x=1, y=2))(2) === ((1,2,3),(x=1,y=2))
+    kw = (x=1, y=42)
+    @test (@fix f(1, _, 3; kw...))(2, y=2) === ((1,2,3),(x=1,y=2))
+
     a2 = @inferred fix(≈, nothing, nothing)
     b2 = @inferred fix(≈, nothing, nothing, atol=1)
     c2 = @inferred fix(≈, nothing, nothing, atol=1, rtol=2)
@@ -36,6 +44,7 @@ using Test
     @inferred b2(1,2)
     @inferred c2(1,2)
     @inferred a1(1.0)
+
 end
 
 @testset "fix(::Type, ...)" begin

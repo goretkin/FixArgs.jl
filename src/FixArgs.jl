@@ -102,7 +102,7 @@ macro fix(call)
     args = call.args[2:end]
     has_parameters = !isempty(args) && Meta.isexpr(args[1], :parameters)
     ret = if has_parameters
-        parameters = args[1].args
+        parameters = args[1]
         Expr(:call, fix, parameters, f, escape_arg.(args[2:end])...)
     else
         Expr(:call, fix, f, escape_arg.(args)...)
