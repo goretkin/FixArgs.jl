@@ -91,13 +91,35 @@ false
 fix(f, args...; kw...) = Fix(f, args, kw)
 
 """
-`@fix f(a,b)` macroexpands to `fix(f, a, b)`
+`@fix f(_,b)` macroexpands to `fix(f, nothing, Some(b))`
 
 """
-macro fix(ex)
-    ex.head == :call || error()
-    # `ex.args[1]` is the function and `ex.args[2:end]` are the positional arguments
-    return :($fix($(map(esc, ex.args)...)))
+macro fix(call)
+    if !Meta.isexpr(call, :call)
+        error("Argument must be a function call expression, got $code")
+    end
+    f = call.args[1]
+    args = call.args[2:end]
+    has_parameters = !isempty(args) && Meta.isexpr(args[1], :parameters)
+    ret = if has_parameters
+        parameters = args[1].args
+        Expr(:call, fix, parameters, f, escape_arg.(args[2:end])...)
+    else
+        Expr(:call, fix, f, escape_arg.(args)...)
+    end
+    esc(ret)
+end
+
+function escape_arg(ex)
+    if Meta.isexpr(ex, :kw)
+        ex
+    elseif Meta.isexpr(ex, Symbol("..."))
+        :(map(Some, $(ex.args[1]))...)
+    elseif ex == :_
+        nothing
+    else
+        Expr(:call, Some, ex)
+    end
 end
 
 end
