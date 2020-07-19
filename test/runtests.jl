@@ -2,12 +2,12 @@ using FixArgs
 using Test
 
 @testset "basics" begin
-    @test  fix(≈, Some(1), nothing, atol=1.1)(2)
-    @test  fix(≈, Some(1), nothing, )(2, atol=1.1)
-    @test !fix(≈, Some(1), nothing, atol=1.1)(2, atol=0.9)
-    @test !fix(≈, Some(1), nothing, atol=0.9)(2)
-    @test  fix(≈, Some(1), nothing, atol=0.9)(2, atol=1.1)
-    @test  fix(≈, Some(1), nothing, atol=0.9)(2, atol=2)
+    @test  fix(≈, 1, nothing, atol=1.1)(2)
+    @test  fix(≈, 1, nothing, )(2, atol=1.1)
+    @test !fix(≈, 1, nothing, atol=1.1)(2, atol=0.9)
+    @test !fix(≈, 1, nothing, atol=0.9)(2)
+    @test  fix(≈, 1, nothing, atol=0.9)(2, atol=1.1)
+    @test  fix(≈, 1, nothing, atol=0.9)(2, atol=2)
 
     @test fix(≈, nothing, nothing, atol=1.1)(1,2)
     @test !fix(≈, nothing, nothing, atol=0.9)(1,2)
