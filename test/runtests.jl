@@ -107,7 +107,7 @@ end
     half = (@fix UInt64(1)/UInt64(3)) * (@fix UInt64(3)/UInt64(2))
     @test half() == 0.5
 
-    typeof(FixArgs.@fix union([1], [2])) == FixArgs.@FixT union(::Vector{Int64}, ::Vector{Int64})
+    @test typeof(FixArgs.@fix union([1], [2])) == FixArgs.@FixT union(::Vector{Int64}, ::Vector{Int64})
 
     #=
     example deferring `Set` operations
