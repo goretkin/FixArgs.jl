@@ -93,8 +93,8 @@ end
     using Base: divgcd
 
     function Base.:*(
-            x::Fix{typeof(/),Tuple{Some{T},Some{T}}},
-            y::Fix{typeof(/),Tuple{Some{T},Some{T}}},
+            x::Fix{typeof(/),Tuple{Some{T},Some{T}},NamedTuple{(),Tuple{}}},
+            y::Fix{typeof(/),Tuple{Some{T},Some{T}},NamedTuple{(),Tuple{}}},
            ) where {T}
         xn, yd = divgcd(something(x.args[1]), something(y.args[2]))
         xd, yn = divgcd(something(x.args[2]), something(y.args[1]))
@@ -111,15 +111,22 @@ end
     example deferring `Set` operations
     =#
 
+    # TODO attach a docstring to a function, without defining a method.
+    #=
     """Produce a "useful" bound, in the sense that `x ∈ input` implies `x ∈ result_type`"""
-    function bounding(result_type, input) end
+    function bounding(result_type, input)
+        # this function exists just so that the docstring can be attached to the generic function
+        throw(MethodError("implement me"))
+    end
+    =#
 
+    """Produce a "useful" bound, in the sense that `x ∈ input` implies `x ∈ result_type`"""
     bounding(::Type{>:UnitRange}, v::Vector{<:Integer}) = UnitRange(extrema(v)...)
     # bounding(URT::Type{UnitRange{T}}, v::Vector{<:Integer}) where T<:Integer = URT(extrema(v)...)
 
     function bounding(
             ::Type{>:UnitRange},
-            _union::Fix{typeof(union),Tuple{Some{UnitRange{T}},Some{UnitRange{T}}}}
+            _union::Fix{typeof(union),Tuple{Some{UnitRange{T}},Some{UnitRange{T}}},NamedTuple{(),Tuple{}}}
            ) where T <: Integer
         (a, b) = something.(_union.args)
         UnitRange(min(minimum(a), minimum(b)), max(maximum(a), maximum(b)))
@@ -130,6 +137,8 @@ end
     # use specialized method for bounding unions of `UnitRange`s
     lazy = bounding(UnitRange, @fix union(1:3,5:7))
     @test eager == lazy
+
+    @test_throws MethodError bounding(UnitRange, @fix union(1:3,5:7; a_kwarg=:unsupported))
 
     r1 = UInt64(1):UInt64(3)
     r2 = UInt64(5):UInt64(7)
