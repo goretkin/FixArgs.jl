@@ -107,6 +107,8 @@ end
     half = (@fix UInt64(1)/UInt64(3)) * (@fix UInt64(3)/UInt64(2))
     @test half() == 0.5
 
+    typeof(FixArgs.@fix union([1], [2])) == FixArgs.@FixT union(::Vector{Int64}, ::Vector{Int64})
+
     #=
     example deferring `Set` operations
     =#
@@ -126,7 +128,7 @@ end
 
     function bounding(
             ::Type{>:UnitRange},
-            _union::Fix{typeof(union),Tuple{Some{UnitRange{T}},Some{UnitRange{T}}},NamedTuple{(),Tuple{}}}
+            _union::(@FixT union(::UnitRange{T}, ::UnitRange{T}))
            ) where T <: Integer
         (a, b) = something.(_union.args)
         UnitRange(min(minimum(a), minimum(b)), max(maximum(a), maximum(b)))
