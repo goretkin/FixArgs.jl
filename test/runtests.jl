@@ -64,7 +64,10 @@ end
 
     using Base: divgcd
 
-    function Base.:*(x::Fix{typeof(/), Tuple{N1, D1}}, y::Fix{typeof(/), Tuple{N2, D2}}) where {N1, D1, N2, D2}
+    function Base.:*(
+            x::Fix{typeof(/),Tuple{Some{T},Some{T}}},
+            y::Fix{typeof(/),Tuple{Some{T},Some{T}}},
+           ) where {T}
         xn, yd = divgcd(something(x.a[1]), something(y.a[2]))
         xd, yn = divgcd(something(x.a[2]), something(y.a[1]))
         ret = @fix (xn * yn) / (xd * yd) # TODO use `unsafe_rational` and `checked_mul`
@@ -72,6 +75,8 @@ end
     end
 
     half = (@fix 1/3) * (@fix 3/2)
+    @test half() == 0.5
+    half = (@fix UInt64(1)/UInt64(3)) * (@fix UInt64(3)/UInt64(2))
     @test half() == 0.5
 
     #=
@@ -84,7 +89,10 @@ end
     bounding(::Type{>:UnitRange}, v::Vector{<:Integer}) = UnitRange(extrema(v)...)
     # bounding(URT::Type{UnitRange{T}}, v::Vector{<:Integer}) where T<:Integer = URT(extrema(v)...)
 
-    function bounding(::Type{>:UnitRange}, _union::Fix) where T <: Integer
+    function bounding(
+            ::Type{>:UnitRange},
+            _union::Fix{typeof(union),Tuple{Some{UnitRange{T}},Some{UnitRange{T}}}}
+           ) where T <: Integer
         (a, b) = something.(_union.a)
         UnitRange(min(minimum(a), minimum(b)), max(maximum(a), maximum(b)))
     end
@@ -93,6 +101,12 @@ end
     eager = bounding(UnitRange, union(1:3,5:7))
     # use specialized method for bounding unions of `UnitRange`s
     lazy = bounding(UnitRange, @fix union(1:3,5:7))
+    @test eager == lazy
+
+    r1 = UInt64(1):UInt64(3)
+    r2 = UInt64(5):UInt64(7)
+    eager = bounding(UnitRange, union(r1,r2))
+    lazy = bounding(UnitRange, @fix union(r1,r2))
     @test eager == lazy
 
 
