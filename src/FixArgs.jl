@@ -44,14 +44,14 @@ Represent a function call, with partially bound arguments.
 """
 struct Fix{F, A, K} <: Function
     f::F
-    a::A
-    k::K
+    args::A
+    kw::K
 end
 
 Fix(::Type{T}, a, k) where {T} = Fix{Type{T}, typeof(a), typeof(k)}(T, a, k)
 
 function (c::Fix)(args...; kw...)
-    c.f(interleave(c.a, args)...; c.k..., kw...)
+    c.f(interleave(c.args, args)...; c.kw..., kw...)
 end
 
 """
@@ -88,7 +88,7 @@ julia> b(10, 20, atol=1) # keywords can be reassigned on the fly
 false
 ```
 """
-fix(f, args...; kw...) = Fix(f, args, kw)
+fix(f, args...; kw...) = Fix(f, args, kw.data)
 
 """
 `@fix f(_,b)` macroexpands to `fix(f, nothing, Some(b))`

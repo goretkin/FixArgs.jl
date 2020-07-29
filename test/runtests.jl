@@ -47,6 +47,21 @@ using Test
 
 end
 
+@testset "@fix object structure" begin
+    f(args...;kw...) = args, kw
+    o = @fix f(1,2)
+    @test o.f    === f
+    @test o.args === (Some(1), Some(2))
+    @test o.kw   === NamedTuple()
+    @test typeof(o) === Fix{typeof(o.f), typeof(o.args), typeof(o.kw)}
+
+    o = @fix f(1,_, a=1, b=2)
+    @test o.f    === f
+    @test o.args === (Some(1), nothing)
+    @test o.kw   === (a=1, b=2)
+    @test typeof(o) === Fix{typeof(o.f), typeof(o.args), typeof(o.kw)}
+end
+
 @testset "fix(::Type, ...)" begin
     f = @inferred fix(CartesianIndex, nothing, Some(1))
     @test @inferred(f(2)) === CartesianIndex(2, 1)
@@ -68,8 +83,8 @@ end
             x::Fix{typeof(/),Tuple{Some{T},Some{T}}},
             y::Fix{typeof(/),Tuple{Some{T},Some{T}}},
            ) where {T}
-        xn, yd = divgcd(something(x.a[1]), something(y.a[2]))
-        xd, yn = divgcd(something(x.a[2]), something(y.a[1]))
+        xn, yd = divgcd(something(x.args[1]), something(y.args[2]))
+        xd, yn = divgcd(something(x.args[2]), something(y.args[1]))
         ret = @fix (xn * yn) / (xd * yd) # TODO use `unsafe_rational` and `checked_mul`
         ret
     end
@@ -93,7 +108,7 @@ end
             ::Type{>:UnitRange},
             _union::Fix{typeof(union),Tuple{Some{UnitRange{T}},Some{UnitRange{T}}}}
            ) where T <: Integer
-        (a, b) = something.(_union.a)
+        (a, b) = something.(_union.args)
         UnitRange(min(minimum(a), minimum(b)), max(maximum(a), maximum(b)))
     end
 
