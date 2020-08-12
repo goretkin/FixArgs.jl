@@ -84,7 +84,7 @@ end
     @test_broken @inferred(g(271)) === 0x0f
 end
 
-@testset "Fix.jl" begin
+@testset "`Rational` as lazy `/``" begin
 
     #=
     example replacement of Rational
@@ -108,7 +108,9 @@ end
     @test half() == 0.5
 
     @test typeof(FixArgs.@fix union([1], [2])) == FixArgs.@FixT union(::Vector{Int64}, ::Vector{Int64})
+end
 
+@testset "lazy `union`" begin
     #=
     example deferring `Set` operations
     =#
