@@ -162,6 +162,39 @@ end
     @test b(", you, ") == "hey, you, there"
 end
 
+@testset "lazy `reduce(vcat, ...)`" begin
+    # A watered-down version of `LazyArrays.Vcat`:
+    # https://github.com/JuliaArrays/LazyArrays.jl/blob/dff5924cd8b52c62a34cce16372381bb8a9e35cb/src/lazyconcat.jl#L11
+
+    # TODO generalie to `AbstractVector`
+    # T_reduce_vcat_vector{T} = (@FixT reduce(::typeof(vcat), ::AbstractVector{<:AbstractVector{T}}))
+    T_reduce_vcat_vector{T} = (@FixT reduce(::typeof(vcat), ::Vector{Vector{T}}))
+
+    _vec_of_vec(reduce_vcat) = something(reduce_vcat.args[2])
+
+    function Base.length(reduce_vcat::T_reduce_vcat_vector{T}) where {T}
+        sum(length.(_vec_of_vec(reduce_vcat)))
+    end
+
+    function Base.getindex(reduce_vcat::T_reduce_vcat_vector{T}, i::Integer) where {T}
+        # TODO validate that all `Vector`s start with index `1`
+        vec_of_vec = _vec_of_vec(reduce_vcat)
+        lengths = length.(vec_of_vec)
+        cum_lengths = cumsum(lengths)
+        i_outer = searchsortedfirst(cum_lengths, i)
+        i_inner = i - (i_outer > 1 ? cum_lengths[i_outer-1] : 0)
+        return vec_of_vec[i_outer][i_inner]
+    end
+
+    ref = reduce(vcat, [[:a, :b, :c], [:d, :e]])
+    laz = @fix reduce(vcat, [[:a, :b, :c], [:d, :e]])
+
+    @test length(ref) == length(laz)
+    for i = 1:length(ref)
+        @test ref[i] == laz[i]
+    end
+end
+
 using Documenter: DocMeta, doctest
 
 # implicit `using FixArgs` in every doctest
