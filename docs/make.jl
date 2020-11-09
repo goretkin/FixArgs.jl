@@ -19,5 +19,6 @@ makedocs(
 
 deploydocs(
     repo = "github.com/goretkin/FixArgs.jl.git",
-    deploy_config = Documenter.GitHubActions()
+    deploy_config = Documenter.GitHubActions(),
+    devbranch = "main",
 )
