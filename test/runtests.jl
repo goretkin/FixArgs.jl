@@ -207,6 +207,24 @@ end
     end
 end
 
+@testset "nested fix" begin
+    nested = (Fix(/, ((Fix(+, (nothing, nothing), NamedTuple())), nothing), NamedTuple()))
+    @test nested((1,2), 3) === 1.0
+    @test (@inferred nested((1,2), 3)) === 1.0
+
+    @test_throws Exception nested()
+    @test_throws Exception nested(1)
+    @test_throws Exception nested(1, 2)
+    @test_throws Exception nested(1, 2, 3)
+    @test_throws Exception nested((1, 2, 4), 3)
+    @test_throws Exception nested((1, 2), 3, 5)
+    @test_throws Exception nested((1,), 3)
+    @test_throws Exception nested((), 3)
+
+    not_nested = (Fix(/, (Some(Fix(+, (nothing, nothing), NamedTuple())), nothing), NamedTuple()))
+    @test_throws MethodError not_nested(1)
+end
+
 using Documenter: DocMeta, doctest
 
 # implicit `using FixArgs` in every doctest
