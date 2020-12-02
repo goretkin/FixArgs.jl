@@ -45,6 +45,8 @@ using Test
     @inferred c2(1,2)
     @inferred a1(1.0)
 
+    @test_throws Exception @fix(_ + _)(1, 2, 3)
+    @test_throws Exception @fix(_ + _)(1)
 end
 
 @testset "@fix object structure" begin
