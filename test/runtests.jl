@@ -230,6 +230,26 @@ end
     @test nested((), 2) === 1.0
 end
 
+@testset "static arguments" begin
+    @test FixArgs.interleave((nothing, 2, nothing, Some(nothing), Val{5}(), Some(Val{6}())), (1, 3)) == (1, 2, 3, nothing, 5, Val{6}())
+end
+
+@testset "Fixed Point Numbers as lazy `/` with static denominator" begin
+    # e.g. Fixed{Int8,7} from `FixedPointNumbers.jl`
+    MyQ0f7_instance = (@fix Int8(3) / Val{128}())
+    MyQ0f7 = typeof(MyQ0f7_instance)
+    @test MyQ0f7 === Fix{typeof(/),Tuple{Some{Int8},Val{128}},NamedTuple{(),Tuple{}}}
+
+    Fixed{N,D} = Fix{typeof(/),Tuple{Some{N},Val{D}},NamedTuple{(),Tuple{}}}
+    function Base.:+(a::Fixed{N,D}, b::Fixed{N,D})::Fixed{N,D} where {N, D}
+        n = something(a.args[1]) + something(b.args[1])
+        return (@fix N(n) / Val{D}())
+    end
+
+    @test (MyQ0f7_instance + MyQ0f7_instance)() === 6/128
+    @test sizeof(MyQ0f7) == sizeof(Int8)
+end
+
 @testset "calls and not calls" begin
     # These errors are thrown at macro expansion time.
     @test_throws Exception eval(:(@fix "not a call $(_)"))

@@ -47,16 +47,21 @@ interleave(bind::Tuple{}, args::Tuple) = error("more args than positions")
 _interleave(firstbind::Nothing, tailbind::Tuple, args::Tuple) = (
     first(args), interleave(tailbind, tail(args))...)
 
-# allow escaping of e.g. `nothing`
+# allow escaping of e.g. `nothing` and `Val(7)()``
 _interleave(firstbind::Some{T}, tailbind::Tuple, args::Tuple) where T = (
     something(firstbind), interleave(tailbind, args)...)
 
+# first position is bound
 _interleave(firstbind::T, tailbind::Tuple, args::Tuple) where T = (
     firstbind, interleave(tailbind, args)...)
 
 # recursively evaluate unescaped `Fix`
 _interleave(firstbind::Fix, tailbind::Tuple, args::Tuple) where T = (
     firstbind((first(args)::Tuple)...), interleave(tailbind, tail(args))...)
+
+# first position is bound with `::Val`
+_interleave(firstbind::Val{arg_bind}, tailbind::Tuple, args::Tuple) where arg_bind = (
+    arg_bind, interleave(tailbind, args)...)
 
 """
     `fix(f, a, b)`
@@ -114,9 +119,11 @@ macro fix(call)
     esc(ret)
 end
 
-SomeUnlessFix(x) = Some(x)          # if macro invocation contains a "bare" argument, wrap it
-SomeUnlessFix(x::Fix) = x           # unless it is `Fix`
-SomeUnlessFix(x::Some{<:Fix}) = x   # but if `Some` is used to escape this behavior, then do not wrap it again
+SomeUnlessNot(x) = Some(x)          # if macro invocation contains a "bare" argument, wrap it
+SomeUnlessNot(x::Fix) = x           # unless it is `Fix`
+SomeUnlessNot(x::Val) = x           # or it is `Val`
+SomeUnlessNot(x::Some{<:Fix}) = x   # but if `Some` is used to escape this behavior, then do not wrap it again
+SomeUnlessNot(x::Some{<:Val}) = x   # but if `Some` is used to escape this behavior, then do not wrap it again
 
 function escape_arg(ex)
     if Meta.isexpr(ex, :kw)
@@ -126,7 +133,7 @@ function escape_arg(ex)
     elseif ex == :_
         nothing
     else
-        Expr(:call, SomeUnlessFix, ex)
+        Expr(:call, SomeUnlessNot, ex)
     end
 end
 
