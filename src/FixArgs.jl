@@ -96,7 +96,7 @@ fix(f, args...; kw...) = Fix(f, args, kw.data)
 """
 macro fix(call)
     if !Meta.isexpr(call, :call)
-        error("Argument must be a function call expression, got $code") # TODO fix error message
+        error("Argument must be a function call expression, got $call")
     end
     f = call.args[1]
     args = call.args[2:end]
