@@ -250,6 +250,35 @@ end
     @test sizeof(MyQ0f7) == sizeof(Int8)
 end
 
+@testset "imaginary unit as lazy and static *, and `Complex` as lazy +, using `reinterpret`" begin
+    # This example is a bit circular, since `im` is already `Complex`. But suppose there were some `ImaginaryUnit()` singleton.
+    # the "besides the point" evaluations would fail, but the overall point stands that:
+    # 1. imaginary numbers can be representeded with lazy multiplication with `ImaginaryUnit()`
+    # 2. complex numbers can be represented with lazy addition of real numbers and imaginary numbers
+
+    typed_data = [i + 10*i*im for i = 1:10]
+    untyped_data = reinterpret(Int, typed_data)
+
+    MyComplex_instance = (@fix (@fix _ + @fix(_ * Val{im}()))(1, (2, )))
+
+    # that this works is kind of besides the point
+    @test MyComplex_instance() === 1 + 2im
+
+    # the point is that `MyComplex` is a memory representation of a complex number made from two `Int`s
+    # `MyComplex` is just an alias for the structure of the type
+    MyComplex = typeof(MyComplex_instance)
+
+    new_typed_data = reinterpret(MyComplex, untyped_data)
+    @test map(x->x(), new_typed_data) == typed_data     # again, kind of besides the point
+
+    # note that there are other structures possible which would give the same results
+    # for example `Val{im}() * _` instead of `_ * Val{im}()` gives a different structure with the same result
+    # swapping the arguments to `+` would give a different memory layout.
+
+    # the point is also that you could define `*(::MyComplex, ::MyComplex)::MyComplex`
+    # and that you can do so without introducing any new type names
+end
+
 @testset "calls and not calls" begin
     # These errors are thrown at macro expansion time.
     @test_throws Exception eval(:(@fix "not a call $(_)"))
