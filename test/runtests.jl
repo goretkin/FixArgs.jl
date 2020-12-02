@@ -47,16 +47,6 @@ using Test
 
     @test_throws Exception @fix(_ + _)(1, 2, 3)
     @test_throws Exception @fix(_ + _)(1)
-
-    # These errors are thrown at macro expansion time.
-    @test_throws Exception eval(:(@fix "not a call $(_)"))
-    @test_throws Exception eval(:(@fix (:not_a_call, _)))
-    if VERSION ≥ v"1.5"
-        @test_throws Exception eval(:(@fix (;a=:not_a_call, b=_)))
-    end
-
-    @fix string("a call ", _)
-    @fix tuple("a call ", _)
 end
 
 @testset "@fix object structure" begin
@@ -226,6 +216,18 @@ end
 
     @test (@fix (@fix _ + _) / _) === nested
     @test (@fix Some(@fix _ + _) / _) === not_nested
+end
+
+@testset "calls and not calls" begin
+    # These errors are thrown at macro expansion time.
+    @test_throws Exception eval(:(@fix "not a call $(_)"))
+    @test_throws Exception eval(:(@fix (:not_a_call, _)))
+    if VERSION ≥ v"1.5"
+        @test_throws Exception eval(:(@fix (;a=:not_a_call, b=_)))
+    end
+
+    @fix string("a call ", _)
+    @fix tuple("a call ", _)
 end
 
 using Documenter: DocMeta, doctest
