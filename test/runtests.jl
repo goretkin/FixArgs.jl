@@ -227,7 +227,7 @@ end
     end
 
     @fix string("a call ", _)
-    @fix tuple("a call ", _)
+    @fix tuple(:a_call, _)
 end
 
 using Documenter: DocMeta, doctest
