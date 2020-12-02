@@ -223,6 +223,9 @@ end
 
     not_nested = (Fix(/, (Some(Fix(+, (nothing, nothing), NamedTuple())), nothing), NamedTuple()))
     @test_throws MethodError not_nested(1)
+
+    @test (@fix (@fix _ + _) / _) === nested
+    @test (@fix Some(@fix _ + _) / _) === not_nested
 end
 
 using Documenter: DocMeta, doctest

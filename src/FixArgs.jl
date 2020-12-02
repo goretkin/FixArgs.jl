@@ -114,15 +114,19 @@ macro fix(call)
     esc(ret)
 end
 
+SomeUnlessFix(x) = Some(x)          # if macro invocation contains a "bare" argument, wrap it
+SomeUnlessFix(x::Fix) = x           # unless it is `Fix`
+SomeUnlessFix(x::Some{<:Fix}) = x   # but if `Some` is used to escape this behavior, then do not wrap it again
+
 function escape_arg(ex)
     if Meta.isexpr(ex, :kw)
         ex
     elseif Meta.isexpr(ex, Symbol("..."))
-        :(map(Some, $(ex.args[1]))...)
+        :(map(Some, $(ex.args[1]))...)      # TODO also `SomeUnlessFix` here?
     elseif ex == :_
         nothing
     else
-        Expr(:call, Some, ex)
+        Expr(:call, SomeUnlessFix, ex)
     end
 end
 
