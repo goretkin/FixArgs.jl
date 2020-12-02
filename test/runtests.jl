@@ -54,6 +54,9 @@ using Test
     if VERSION ≥ v"1.5"
         @test_throws Exception eval(:(@fix (;a=:not_a_call, b=_)))
     end
+
+    @fix string("a call ", _)
+    @fix tuple("a call ", _)
 end
 
 @testset "@fix object structure" begin
