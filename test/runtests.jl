@@ -197,7 +197,7 @@ end
     end
 end
 
-@testset "nested fix" begin
+@testset "nested fix two arguments" begin
     nested = (Fix(/, ((Fix(+, (nothing, nothing), NamedTuple())), nothing), NamedTuple()))
     @test nested((1,2), 3) === 1.0
     @test (@inferred nested((1,2), 3)) === 1.0
@@ -218,6 +218,12 @@ end
     @test (@fix Some(@fix _ + _) / _) === not_nested
 end
 
+@testset "nested fix one arguments" begin
+    nested = (@fix (@fix _ + 1) / _)
+    @test_throws Exception nested(1, 2)
+    @test nested((1, ), 2) === 1.0
+end
+
 @testset "calls and not calls" begin
     # These errors are thrown at macro expansion time.
     @test_throws Exception eval(:(@fix "not a call $(_)"))
@@ -233,8 +239,7 @@ end
     @test fs(4) == "a call 4"
     @test ft(4) == (:a_call, 4)
     @test fnt((4,)) ==  NamedTuple{(:a, :b)}((:a_call, 4))
-    # TODO since `4` can be splat (`Number` defines `iterate`), this does not error.
-    @test fnt(4) ==  NamedTuple{(:a, :b)}((:a_call, 4))
+    @test_throws Exception fnt(4)
 end
 
 using Documenter: DocMeta, doctest

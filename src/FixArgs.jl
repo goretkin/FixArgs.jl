@@ -56,7 +56,7 @@ _interleave(firstbind::T, tailbind::Tuple, args::Tuple) where T = (
 
 # recursively evaluate unescaped `Fix`
 _interleave(firstbind::Fix, tailbind::Tuple, args::Tuple) where T = (
-    firstbind(first(args)...), interleave(tailbind, tail(args))...)
+    firstbind((first(args)::Tuple)...), interleave(tailbind, tail(args))...)
 
 """
     `fix(f, a, b)`
