@@ -4,6 +4,21 @@ using Base: tail
 export Fix, @fix, fix, @FixT
 
 """
+Represent a function call, with partially bound arguments.
+"""
+struct Fix{F, A, K} <: Function
+    f::F
+    args::A
+    kw::K
+end
+
+Fix(::Type{T}, a, k) where {T} = Fix{Type{T}, typeof(a), typeof(k)}(T, a, k)
+
+function (c::Fix)(args...; kw...)
+    c.f(interleave(c.args, args)...; c.kw..., kw...)
+end
+
+"""
 Return a `Tuple` that interleaves `args` into the `nothing` slots of `slots`.
 
 ```jldoctest
@@ -38,21 +53,6 @@ _interleave(firstbind::Some{T}, tailbind::Tuple, args::Tuple) where T = (
 
 _interleave(firstbind::T, tailbind::Tuple, args::Tuple) where T = (
   firstbind, interleave(tailbind, args)...)
-
-"""
-Represent a function call, with partially bound arguments.
-"""
-struct Fix{F, A, K} <: Function
-    f::F
-    args::A
-    kw::K
-end
-
-Fix(::Type{T}, a, k) where {T} = Fix{Type{T}, typeof(a), typeof(k)}(T, a, k)
-
-function (c::Fix)(args...; kw...)
-    c.f(interleave(c.args, args)...; c.kw..., kw...)
-end
 
 """
     `fix(f, a, b)`
