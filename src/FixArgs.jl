@@ -45,14 +45,14 @@ interleave(bind::Tuple{}, args::Tuple) = error("more args than positions")
 
 # `nothing` indicates a position to be bound
 _interleave(firstbind::Nothing, tailbind::Tuple, args::Tuple) = (
-  first(args), interleave(tailbind, tail(args))...)
+    first(args), interleave(tailbind, tail(args))...)
 
 # allow escaping of e.g. `nothing`
 _interleave(firstbind::Some{T}, tailbind::Tuple, args::Tuple) where T = (
-  something(firstbind), interleave(tailbind, args)...)
+    something(firstbind), interleave(tailbind, args)...)
 
 _interleave(firstbind::T, tailbind::Tuple, args::Tuple) where T = (
-  firstbind, interleave(tailbind, args)...)
+    firstbind, interleave(tailbind, args)...)
 
 # recursively evaluate unescaped `Fix`
 _interleave(firstbind::Fix, tailbind::Tuple, args::Tuple) where T = (
