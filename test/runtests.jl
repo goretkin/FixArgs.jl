@@ -224,6 +224,12 @@ end
     @test nested((1, ), 2) === 1.0
 end
 
+@testset "nested fix zero arguments" begin
+    nested = (@fix (@fix 1 + 1) / _)
+    @test_throws Exception nested(2)
+    @test nested((), 2) === 1.0
+end
+
 @testset "calls and not calls" begin
     # These errors are thrown at macro expansion time.
     @test_throws Exception eval(:(@fix "not a call $(_)"))
