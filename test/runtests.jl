@@ -226,8 +226,15 @@ end
         @test_throws Exception eval(:(@fix (;a=:not_a_call, b=_)))
     end
 
-    @fix string("a call ", _)
-    @fix tuple(:a_call, _)
+    fs = @fix string("a call ", _)
+    ft = @fix tuple(:a_call, _)
+    fnt = @fix NamedTuple{(:a, :b)}(@fix tuple(:a_call, _))
+
+    @test fs(4) == "a call 4"
+    @test ft(4) == (:a_call, 4)
+    @test fnt((4,)) ==  NamedTuple{(:a, :b)}((:a_call, 4))
+    # TODO since `4` can be splat (`Number` defines `iterate`), this does not error.
+    @test fnt(4) ==  NamedTuple{(:a, :b)}((:a_call, 4))
 end
 
 using Documenter: DocMeta, doctest
