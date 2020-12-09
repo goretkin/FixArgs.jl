@@ -297,6 +297,23 @@ end
     @test_throws Exception fnt(4)
 end
 
+function isinferred(f, arg_types)
+    Ts = Base.return_types(foo, arg_types)
+    return length(Ts) == 1 && isconcretetype(only(Ts))
+end
+
+@testset "repeat arguments" begin
+    foo = (@fix tuple(_1, _2, _5, @fix (string(_1, _3, _4))))
+    @test foo(:a, :b, "c", 1, 2.0) == (:a, :b, 2.0, "ac1")
+    @test isinferred(foo, (Symbol, Symbol, String, Int64, Float64))
+
+    # not enough args
+    @test !isinferred(foo, (Symbol, Symbol, String, Int64))
+
+    # document that there's no error on extra args
+    @test foo(:a, :b, "c", 1, 2.0, :extra) == (:a, :b, 2.0, "ac1")
+end
+
 using Documenter: DocMeta, doctest
 
 # implicit `using FixArgs` in every doctest

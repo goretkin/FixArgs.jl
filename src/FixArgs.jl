@@ -39,7 +39,7 @@ FixArgs.interleave((:a, Some(nothing), :c, nothing), (34,))
 (:a, nothing, :c, 34)
 ```
 """
-interleave(bind, args) = _interleave(first(bind), tail(bind), args)
+interleave(bind::Tuple, args) = _interleave(first(bind), tail(bind), args)
 interleave(bind::Tuple{}, args::Tuple{}) = ()
 interleave(bind::Tuple{}, args::Tuple) = error("more args than positions")
 
@@ -97,7 +97,15 @@ julia> b(10, 20, atol=1) # keywords can be reassigned on the fly
 false
 ```
 """
-fix(f, args...; kw...) = Fix(f, args, kw.data)
+function fix(f, args...; kw...)
+    # TODO allow robust selection of `Template`, even if there are no `ArgPos`s
+    # Or remove sequence-based approach altogether
+    if any(x -> x isa ArgPos, args)
+        Fix(f, Template(args), kw.data)
+    else
+        Fix(f, args, kw.data)
+    end
+end
 
 """
 `@fix f(_,b)` macroexpands to `fix(f, nothing, Some(b))`
@@ -119,11 +127,41 @@ macro fix(call)
     esc(ret)
 end
 
-SomeUnlessNot(x) = Some(x)          # if macro invocation contains a "bare" argument, wrap it
-SomeUnlessNot(x::Fix) = x           # unless it is `Fix`
-SomeUnlessNot(x::Val) = x           # or it is `Val`
-SomeUnlessNot(x::Some{<:Fix}) = x   # but if `Some` is used to escape this behavior, then do not wrap it again
-SomeUnlessNot(x::Some{<:Val}) = x   # but if `Some` is used to escape this behavior, then do not wrap it again
+
+# `Fix.args::Tuple` is the (previous) sequential, descending behavior
+# `Fix.args::Template{Tuple}` is the (new) position, "flat" behavior
+struct Template{T}
+    _::T
+end
+
+struct ArgPos{N} # lens into argument position
+end
+
+_interweave(::ArgPos{N}, args::Tuple) where N = args[N]
+_interweave(::Val{ARG_BIND}, args::Tuple) where ARG_BIND  = ARG_BIND
+_interweave(arg_bind::Some{<:Any}, args::Tuple) = something(arg_bind)
+
+# recursively evaluate unescaped `Fix`
+_interweave(fix::Fix, args::Tuple) = fix(args...)
+
+function interweave(template::Tuple, args::Tuple)
+    # `map` seems to infer better than `ntuple`
+    # ntuple(i -> _interweave(template[i], args), length(template))
+    map(t -> _interweave(t, args), template)
+end
+
+interleave(bind::Template, args) = interweave(bind._, args)
+
+# if macro invocation contains a "bare" argument, wrap it
+SomeUnlessNot(x) = Some(x)
+
+# exceptions
+SomeUnlessNot(x::Fix) = x
+SomeUnlessNot(x::Val) = x
+
+# `Some` is used to escape the exceptions, do not wrap again
+SomeUnlessNot(x::Some{<:Fix}) = x
+SomeUnlessNot(x::Some{<:Val}) = x
 
 function escape_arg(ex)
     if Meta.isexpr(ex, :kw)
@@ -132,6 +170,9 @@ function escape_arg(ex)
         :(map(Some, $(ex.args[1]))...)      # TODO also `SomeUnlessFix` here?
     elseif ex == :_
         nothing
+    elseif startswith(string(ex), "_")
+        p = parse(Int, string(ex)[2:end])
+        ArgPos{p}()
     else
         Expr(:call, SomeUnlessNot, ex)
     end
