@@ -198,7 +198,7 @@ end
     end
 end
 
-@testset "nested fix two arguments" begin
+@testset "nested call two arguments" begin
     nested = (Fix(/, ((Fix(+, (nothing, nothing), NamedTuple())), nothing), NamedTuple()))
     @test nested((1,2), 3) === 1.0
     @test (@inferred nested((1,2), 3)) === 1.0
@@ -219,13 +219,13 @@ end
     @test (@fix Some(@fix _ + _) / _) === not_nested
 end
 
-@testset "nested fix one arguments" begin
+@testset "nested call one arguments" begin
     nested = (@fix (@fix _ + 1) / _)
     @test_throws Exception nested(1, 2)
     @test nested((1, ), 2) === 1.0
 end
 
-@testset "nested fix zero arguments" begin
+@testset "nested call zero arguments" begin
     nested = (@fix (@fix 1 + 1) / _)
     @test_throws Exception nested(2)
     @test nested((), 2) === 1.0
@@ -315,7 +315,7 @@ end
     @test foo(:a, :b, "c", 1, 2.0, :extra) == (:a, :b, 2.0, "ac1")
 end
 
-@testset "nested functions" begin
+@testset "nested function definitions" begin
     foo = x -> (y -> *(x, y))
 
     foo1 = Fix(
