@@ -146,6 +146,7 @@ _interweave(arg_bind::Some{<:Any}, args::Tuple) = something(arg_bind)
 # recursively evaluate unescaped `Fix`
 _interweave(fix::Fix, args::Tuple) = fix(args...)
 
+# TODO handle `Val` too?
 _wrap_nested_sub(a::ArgPos) = a
 _wrap_nested_sub(a) = Some(a)
 # recursively substitute nested structural lambda
