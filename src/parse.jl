@@ -34,8 +34,8 @@ function number_label_args(ex, labels_stack = [])
     @show ex 
     @show labels_stack
     println()
-    maybe_lambda = parse_lambda(ex)
-    if !isnothing(maybe_lambda)
+    if ex isa Expr && ex.head == :(->)
+        maybe_lambda = parse_lambda(ex)
         labels_stack_ = vcat(labels_stack, [maybe_lambda.args])
         labels_stack = labels_stack_
     end
