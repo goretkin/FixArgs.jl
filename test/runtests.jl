@@ -298,7 +298,7 @@ end
 end
 
 function isinferred(f, arg_types)
-    Ts = Base.return_types(foo, arg_types)
+    Ts = Base.return_types(f, arg_types)
     return length(Ts) == 1 && isconcretetype(only(Ts))
 end
 
