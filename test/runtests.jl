@@ -1,4 +1,5 @@
 using FixArgs
+using FixArgs: Template, ArgPos
 using Test
 
 @testset "basics" begin
@@ -312,6 +313,23 @@ end
 
     # document that there's no error on extra args
     @test foo(:a, :b, "c", 1, 2.0, :extra) == (:a, :b, 2.0, "ac1")
+end
+
+@testset "nested functions" begin
+    foo = x -> (y -> *(x, y))
+
+    foo1 = Fix(
+        Fix,
+        Template((
+            Some(*),
+            Template((
+                ArgPos{1}(),
+                Some(ArgPos{1}())
+            ))
+        ))
+    )
+
+    @test foo("a")("b") == foo1("a")("b")
 end
 
 using Documenter: DocMeta, doctest

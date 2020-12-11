@@ -14,6 +14,8 @@ end
 
 Fix(::Type{T}, a, k) where {T} = Fix{Type{T}, typeof(a), typeof(k)}(T, a, k)
 
+Fix(f, args) = Fix(f, args, NamedTuple())
+
 function (c::Fix)(args...; kw...)
     c.f(interleave(c.args, args)...; c.kw..., kw...)
 end
@@ -143,6 +145,11 @@ _interweave(arg_bind::Some{<:Any}, args::Tuple) = something(arg_bind)
 
 # recursively evaluate unescaped `Fix`
 _interweave(fix::Fix, args::Tuple) = fix(args...)
+
+_wrap_nested_sub(a::ArgPos) = a
+_wrap_nested_sub(a) = Some(a)
+# recursively substitute nested structural lambda
+_interweave(t::Template, args::Tuple) = Template(map(_wrap_nested_sub, interweave(t._, args)))
 
 function interweave(template::Tuple, args::Tuple)
     # `map` seems to infer better than `ntuple`
