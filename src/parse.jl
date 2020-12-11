@@ -31,9 +31,7 @@ end
 
 function number_label_args(ex, labels_stack = [])
     ex isa Symbol && return get_label(labels_stack, ex)
-    @show ex 
-    @show labels_stack
-    println()
+
     if ex isa Expr && ex.head == :(->)
         maybe_lambda = parse_lambda(ex)
         labels_stack_ = vcat(labels_stack, [maybe_lambda.args])
