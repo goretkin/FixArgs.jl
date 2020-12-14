@@ -91,15 +91,17 @@ function build_fix(ex, labels = nothing)
     if ex isa Expr && ex.head === :call
         q_f = ex.args[1]
         println("call: $q_f")
-        q_a = Tuple(ex.args[2:end])
-        q_a_ = build_fix.(q_a, Ref(labels))
-        @show q_a_
-        return cleanexpr(quote
-            Fix(
-                $(esc(q_f)),
-                Template(($(q_a_...),))
-            )
-        end)
+        if eval(q_f) !== Template
+            q_a = Tuple(ex.args[2:end])
+            q_a_ = build_fix.(q_a, Ref(labels))
+            @show q_a_
+            return cleanexpr(quote
+                Fix(
+                    $(esc(q_f)),
+                    Template(($(q_a_...),))
+                )
+            end)
+        end
     end
 
     if true # want it to work for all literals
