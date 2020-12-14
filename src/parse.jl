@@ -70,16 +70,22 @@ end
 
 using FixArgs: Template, ArgPos
 
+cleanexpr(ex) = MacroTools.flatten(MacroTools.striplines(ex))
+
 function build_fix(ex, labels = nothing)
     println()
     @show MacroTools.prettify(ex)
+    # @show ex
     @show labels
 
     if ex isa Expr && ex.head === :(->)
         println("λ")
         lambda = parse_lambda(ex)
-        labels = lambda.args
-        return build_fix(lambda.body, labels)
+        labels_ = lambda.args
+        inner_fix = build_fix(lambda.body, labels_)
+        labels === nothing && return inner_fix
+        @show inner_fix
+        return build_fix(inner_fix, labels)
     end
 
     if ex isa Expr && ex.head === :call
@@ -88,25 +94,25 @@ function build_fix(ex, labels = nothing)
         q_a = Tuple(ex.args[2:end])
         q_a_ = build_fix.(q_a, Ref(labels))
         @show q_a_
-        return quote
+        return cleanexpr(quote
             Fix(
                 $(esc(q_f)),
                 Template(($(q_a_...),))
             )
-        end
+        end)
     end
 
     if true # want it to work for all literals
-        println("s")
+        println("not lambda, not call")
         labels === nothing && return ex
         i = findonly(==(ex), labels)
         println("i is $i")
-        i === nothing && return quote
-            Some(($(esc(ex))))
-        end
-        return quote
+        i === nothing && return cleanexpr(quote
+            ($(esc(ex))) # wrap with Some afterwards
+        end)
+        return cleanexpr(quote
             ArgPos{$(i)}()
-        end
+        end)
     end
     println("fallthrough")
     return ex   # LineNumberNode, etc.
