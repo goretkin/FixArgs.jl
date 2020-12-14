@@ -139,6 +139,8 @@ end
 struct ArgPos{N} # lens into argument position
 end
 
+ArgPos(i) = ArgPos{i}()
+
 _interweave(::ArgPos{N}, args::Tuple) where N = args[N]
 _interweave(::Val{ARG_BIND}, args::Tuple) where ARG_BIND  = ARG_BIND
 _interweave(arg_bind::Some{<:Any}, args::Tuple) = something(arg_bind)
