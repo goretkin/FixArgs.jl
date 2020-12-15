@@ -124,61 +124,77 @@ macro fixxx(ex)
     build_fix(ex)
 end
 
-ex0 = :(
-    () -> /(1, 2)
-)
-# Fix(/ Template((Some(1), Some(2))))
+test_lambdas = [
+    (
+        :(
+            () -> /(1, 2)
+        ),
+        :(
+            Fix(/, Template((Some(1), Some(2))))
+        )
+    ),
+    (
+        :(
+            (y) -> ==(y, x)
+        ),
+        :(
+            Fix(==, Template((ArgPos{1}(), Some(x))))
+        )
+    ),
+    (
+        :(
+            (x, y, z) -> f(g(x, y), h(x, z))
+        ),
+        missing
+    ),
+    (
+        :(
+            x -> (y -> *(x, y))
+        ),
+        :(
+            Fix(
+                Fix,
+                Template((
+                    Some(*),
+                    Template((
+                        ArgPos{1}(),
+                        Some(ArgPos{1}())
+                    ))
+                ))
+            )
+        )
+    ),
+    (
+        :(
+            (f, x) -> f(() -> x)
+        ),
+        missing
+    ),
+    (
+        :(
+            (f, x) -> f(() -> identity(x))
+        ),
+        missing
+    ),
+    (
+        :(
+            (f, x) -> f(identity(x))
+        ),
+        missing
+    ),
+    (
+        :(
+            (x, z) -> map(y -> *(x, y), z)
+        ),
+        missing
+    )
+]
 
-ex1 = :(
-    (y) -> ==(y, x)
-)
-# Fix(==, Template((ArgPos{1}(), Some(x))))
-
-
-ex2 = :(
-    (x, y, z) -> f(g(x, y), h(x, z))
-)
-
-ex3= :(
-    x -> (y -> *(x, y))
-)
-
-#=
- Fix(
-    Fix,
-    Template((
-        Some(*),
-        Template((
-            ArgPos{1}(),
-            Some(ArgPos{1}())
-        ))
-    ))
-)
-=#
-
-#=
-ex3 = :(
-    (x, y) -> map(z -> *(x, z), y)
-)
-=#
-
-ex4 = :(
-    (f, x) -> f(() -> x)
-)
-
-ex4a = :(
-    (f, x) -> f(() -> identity(x))
-)
-
-ex5 = :(
-    (f, x) -> f(identity(x))
-)
 
 build_fix(:(
     () -> identity(x)
 ))
 @fixxx () -> identity(x)
-
 
 #=
 (...) -> f(...) <=> Fix(f, ...)
