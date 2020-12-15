@@ -126,31 +126,23 @@ end
 
 test_lambdas = [
     (
-        :(
-            () -> /(1, 2)
-        ),
+        :(() -> /(1, 2)),
         :(
             Fix(/, Template((Some(1), Some(2))))
         )
     ),
     (
-        :(
-            (y) -> ==(y, x)
-        ),
+        :((y) -> ==(y, x)),
         :(
             Fix(==, Template((ArgPos{1}(), Some(x))))
         )
     ),
     (
-        :(
-            (x, y, z) -> f(g(x, y), h(x, z))
-        ),
+        :((x, y, z) -> f(g(x, y), h(x, z))),
         missing
     ),
     (
-        :(
-            x -> (y -> *(x, y))
-        ),
+        :(x -> (y -> *(x, y))),
         :(
             Fix(
                 Fix,
@@ -165,27 +157,19 @@ test_lambdas = [
         )
     ),
     (
-        :(
-            (f, x) -> f(() -> x)
-        ),
+        :((f, x) -> f(() -> x)),
         missing
     ),
     (
-        :(
-            (f, x) -> f(() -> identity(x))
-        ),
+        :((f, x) -> f(() -> identity(x))),
         missing
     ),
     (
-        :(
-            (f, x) -> f(identity(x))
-        ),
+        :((f, x) -> f(identity(x))),
         missing
     ),
     (
-        :(
-            (x, z) -> map(y -> *(x, y), z)
-        ),
+        :((x, z) -> map(y -> *(x, y), z)),
         missing
     )
 ]
