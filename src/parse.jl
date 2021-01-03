@@ -132,9 +132,9 @@ test_lambdas = [
         )
     ),
     (
-        :((y) -> ==(y, x)),
+        :(y -> *(x, y)),
         :(
-            Fix(==, Template((ArgPos{1}(), Some(x))))
+            Fix(*, Template((Some(x), ArgPos{1}())))
         )
     ),
     (
@@ -171,6 +171,10 @@ test_lambdas = [
     (
         :((x, z) -> map(y -> *(x, y), z)),
         missing
+    )
+    (
+        :(x -> x),
+        missing # throw an error
     )
 ]
 
