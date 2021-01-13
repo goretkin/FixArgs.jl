@@ -155,7 +155,17 @@ test_lambdas = [
     ),
     (
         :((x) -> f(() -> identity(x))),
-        missing
+        Fix(
+            f,
+            Template((
+                Fix(
+                    identity,
+                    Template((
+                        Scope(ArgPos(1))
+                    ))
+                )
+            ))
+        )
     ),
     (
         :((f, x) -> f(() -> identity(x))),
@@ -173,8 +183,8 @@ test_lambdas = [
                 Template((
                     Some(*),
                     Template((
-                        ArgPos{1}(),
-                        Some(ArgPos{1}())
+                        ArgPos(1),
+                        Some(ArgPos(1)) # use `Scope` ?
                     ))
                 ))
             )
