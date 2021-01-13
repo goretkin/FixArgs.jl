@@ -138,7 +138,31 @@ test_lambdas = [
         )
     ),
     (
+        :(x -> x),
+        missing # throw an error
+    ),
+    (
+        :(x -> identity(x)),
+        missing
+    ),
+    (
+        :((x) -> f(() -> x)),
+        missing # throw an error
+    ),
+    (
         :((f, x) -> f(() -> x)),
+        missing # throw an error
+    ),
+    (
+        :((x) -> f(() -> identity(x))),
+        missing
+    ),
+    (
+        :((f, x) -> f(() -> identity(x))),
+        missing
+    ),
+    (
+        :((f, x) -> f(identity(x))),
         missing
     ),
     (
@@ -157,20 +181,8 @@ test_lambdas = [
         )
     ),
     (
-        :((f, x) -> f(() -> identity(x))),
-        missing
-    ),
-    (
-        :((f, x) -> f(identity(x))),
-        missing
-    ),
-    (
         :((x, z) -> map(y -> *(x, y), z)),
         missing
-    ),
-    (
-        :(x -> x),
-        missing # throw an error
     ),
     (
         :((x, y) -> f(x, g(y))),
