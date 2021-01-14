@@ -1,4 +1,4 @@
-using MacroTools: rmlines, unblock
+using MacroTools: @capture, rmlines, unblock
 
 function parse_lambda(ex)
     arrow = :(->)
@@ -198,7 +198,7 @@ test_lambdas = [
         )
     ),
     (
-        :((f, x) -> f(x),
+        :((f, x) -> f(x)),
         # (f, x) -> Eval(() -> f(x))
         #= ??
         Fix(
@@ -215,7 +215,6 @@ test_lambdas = [
         =#
         missing # this probably needs to be an error
     ),
-
     (
         :((f, x) -> f(() -> identity(x))),
         missing
