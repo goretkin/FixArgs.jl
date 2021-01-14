@@ -47,11 +47,23 @@ _typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(expr.args[
 _typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(expr.args[1], expr.args[2:end]) # TODO handle TypedExpr with kwargs
 _typed1(x) = x
 
-using MacroTools: striplines, flatten
+using MacroTools: MacroTools, striplines, flatten
+
+is_lambda_1_arg(ex::Expr) = (ex.head == :->) && (ex.args[1] isa Symbol) # TODO or check that it's not a ex::Expr with `ex.head === :tuple`
+is_lambda_1_arg(x) = false
+
+function _normalize_lambda_1_arg(ex)
+    is_lambda_1_arg(ex) || return ex
+    arg = ex.args[1]
+    body = ex.args[2]
+    return :(($(arg), ) -> $(body))
+end
+
+"""normalize `:(x -> $body)` into  `:((x,) -> $body`)"""
+normalize_lambda_1_arg(ex) = MacroTools.prewalk(_normalize_lambda_1_arg, ex)
 
 # other order doesn't work. I suppose `striplines` introduces blocks
-# TODO normalize `:(x -> $body)` into  `:((x,) -> $body`)
-clean_ex(ex) = flatten(striplines(ex))
+clean_ex(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
 
 ex = clean_ex(:(x -> $(==)(x, 0)))
 _typed1(_typed(ex))
@@ -61,7 +73,7 @@ const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
 using Test
 if VERSION >= v"1.6-"
     # test alias printing
-    @test string(typeof(_typed1(_typed(ex)))) == "FixNew{Val{:x}, typeof(==), Tuple{Val{:x}, Int64}}"
+    @test string(typeof(_typed1(_typed(ex)))) == FixNew{TypedExpr{Val{:tuple}, Tuple{Val{:x}}}, typeof(==), Tuple{Val{:x}, Int64}}
 end
 
 macro tquote(ex)
