@@ -33,15 +33,14 @@ function parse_label(s)
 end
 parse_label(s::Symbol) = parse_label(string(s))
 
-function get_label(labeler, labels_stack, sym::Symbol, referent_depth)
+function get_label(labeler, labels_stack, sym, referent_depth)
     for (antecedent_depth, labels) = reverse(collect(enumerate(labels_stack)))
         ns = findall(==(sym), labels)
         length(ns) == 0 && continue
         arg_i = only(ns)
-        length(ns) == 1 && return labeler((; referent_depth, antecedent_depth, arg_i))
+        length(ns) == 1 && return labeler((; referent_depth, antecedent_depth, arg_i, sym))
         error("multiple arguments match $sym")
     end
-    startswith(string(sym), "_") && error("Cannot capture $sym because it conflicts with number label")
     return sym
 end
 
@@ -52,11 +51,12 @@ end
 `x.referent_depth`
 `x.antecedent_depth`
 `x.arg_i`
+`x.sym` -- name before relabeling
 
 `x.referent_depth - x.antecedent_depth` is number of `->`s that are between the evaluation site and the definition site
 """
-function relabel_args(labeler, ex, labels_stack = [], this_depth = 1)
-    ex isa Symbol && return get_label(labeler, labels_stack, ex, this_depth)
+function relabel_args(is_symbol, labeler, ex, labels_stack = [], this_depth = 1)
+    is_symbol(ex) && return get_label(labeler, labels_stack, ex, this_depth)
 
     next_depth = this_depth
     if ex isa Expr && ex.head == :(->)
@@ -64,12 +64,12 @@ function relabel_args(labeler, ex, labels_stack = [], this_depth = 1)
         labels_stack_ = vcat(labels_stack, [maybe_lambda.args])
         labels_stack = labels_stack_
         next_depth = this_depth + 1
-        args_ = relabel_args.(Ref(labeler), ex.args, Ref(labels_stack), (this_depth, next_depth))
+        args_ = relabel_args.(Ref(is_symbol), Ref(labeler), ex.args, Ref(labels_stack), (this_depth, next_depth))
         return Expr(ex.head, args_...)
     end
 
     if ex isa Expr
-        args_ = relabel_args.(Ref(labeler), ex.args, Ref(labels_stack), Ref(next_depth))
+        args_ = relabel_args.(Ref(is_symbol), Ref(labeler), ex.args, Ref(labels_stack), Ref(next_depth))
         return Expr(ex.head, args_...)
     end
 
@@ -77,7 +77,7 @@ function relabel_args(labeler, ex, labels_stack = [], this_depth = 1)
 end
 
 # spot-check behavior
-@show relabel_args(x -> Symbol(string(x)), :(x -> (y -> x + y)))
+@show relabel_args(x -> x isa Symbol, x -> Symbol(string(x)), :(x -> (y -> x + y)))
 
 function findonly(f, v)
     rs = findall(f, v)
@@ -85,8 +85,6 @@ function findonly(f, v)
     length(rs) == 1 && return only(rs)
     error("multiple matches: $(rs)")
 end
-
-using FixArgs: Template, ArgPos
 
 test_lambdas = [
     (
