@@ -19,10 +19,23 @@ _typed(expr::Expr) = TypedExpr(
     _typed(expr.args)
 )
 
+struct EscVal{T}
+end
+
 _typed(args::Vector) = tuple(map(_typed, args)...)
 _typed(sym::Symbol) = Val(sym)
-_typed(x) = x # catch e.g. functions
 
+# pass on anything that is already evaluated
+_typed(x) = x
+
+# if it was an evaluated `Val`, escape it to distinguish it from having originated with a ::Symbol
+_typed(x::Val) = EscVal{typeof(x)}()
+_typed(x::EscVal) = EscVal{typeof(x)}()
+
+# because Symbol is already wrapped above, we can unquote `QuoteNode` of `Symbol`.
+# e.g. ``:(:x)`` to ``:x`
+# TODO perhaps not just `Symbol`?
+_typed(x::QuoteNode) = x.value isa Symbol ? x.value : x
 struct Args{P, KW}
 end
 
@@ -43,8 +56,9 @@ _Union(x...) = reduce(_Union, x)
 
 KeywordArgType(kwarg_names...) = _Union(sort(collect(kwarg_names))...)
 
-_typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(expr.args[1], _typed1(expr.args[2]))
+_typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(_typed1(expr.args[1]), _typed1(expr.args[2]))
 _typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(expr.args[1], expr.args[2:end]) # TODO handle TypedExpr with kwargs
+_typed1(expr::TypedExpr{Val{:tuple}, X}) where {X} = expr.args
 _typed1(x) = x
 
 using MacroTools: MacroTools, striplines, flatten
@@ -65,15 +79,21 @@ normalize_lambda_1_arg(ex) = MacroTools.prewalk(_normalize_lambda_1_arg, ex)
 # other order doesn't work. I suppose `striplines` introduces blocks
 clean_ex(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
 
-ex = clean_ex(:(x -> $(==)(x, 0)))
-_typed1(_typed(ex))
+_ex_1 = :(x -> ==(x, 0))
+_ex_2 = :(x -> $(==)(x, 0))
+_ex_3 = :(x -> $(==)(x, :zero))
+_ex_4 = :(x -> $(==)(x, $(Val(0))))
+_ex_5 = :(x -> $(==)(x, $(EscVal{Val(0)}())))
+
+all_typed(ex) = _typed1(_typed(clean_ex(ex)))
+ex = all_typed(_ex_2)
 
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
 
 using Test
 if VERSION >= v"1.6-"
     # test alias printing
-    @test string(typeof(_typed1(_typed(ex)))) == FixNew{TypedExpr{Val{:tuple}, Tuple{Val{:x}}}, typeof(==), Tuple{Val{:x}, Int64}}
+    @test string(typeof(_typed1(_typed(ex)))) == "FixNew{Tuple{Val{:x}}, typeof(==), Tuple{Val{:x}, Int64}}"
 end
 
 macro tquote(ex)
