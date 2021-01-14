@@ -91,14 +91,21 @@ function build_fix(ex, labels = nothing)
     if ex isa Expr && ex.head === :call
         q_f = ex.args[1]
         println("call: $q_f")
-        if eval(q_f) !== Template
+        if eval(q_f) === Template   # TODO make this check purely syntactic
+            println("nested Template")
+            return ex # TODO do something
+        else
             q_a = Tuple(ex.args[2:end])
             q_a_ = build_fix.(q_a, Ref(labels))
             @show q_a_
+            template_expr = :(Template(($(q_a_...),)))
+            if eval(q_f) === Fix # TODO make this check purely syntactic
+                println("TODO evaluate nested Template")
+            end
             return cleanexpr(quote
                 Fix(
                     $(esc(q_f)),
-                    Template(($(q_a_...),))
+                    $template_expr
                 )
             end)
         end
@@ -110,7 +117,8 @@ function build_fix(ex, labels = nothing)
         i = findonly(==(ex), labels)
         println("i is $i")
         i === nothing && return cleanexpr(quote
-            ($(esc(ex))) # wrap with Some afterwards
+            # ($(esc(ex))) # wrap with Some afterwards
+            Some($ex)
         end)
         return cleanexpr(quote
             ArgPos{$(i)}()
@@ -278,4 +286,72 @@ Fix(
         ))
     ))
 )
+=#
+
+
+# copied from `nested_position_fix.jl`, unsure what it is. TODO probably just delete.
+#=
+
+ex1 = :(
+    (x, y, z) -> f(g(x, y), h(x, z))
+)
+
+ex2 = :(
+    x -> (y -> *(x, y))
+)
+
+ex3 = :(
+    (x, y) -> map(z -> *(x, z), y)
+)
+
+using MacroTools: rmlines, unblock
+
+function parse_lambda(ex)
+    arrow = :(->)
+    matched = @capture ex (args__,) -> body_
+    body = unblock(body)
+    matched && return (;args, body)
+
+    matched = @capture ex arg_ -> body_
+    args = Vector{Any}([arg])
+    body = unblock(body)
+    matched && return (;args, body)
+    return nothing
+end
+
+function parse_call(ex)
+    matched = @capture ex f_(args__)
+    matched && return (;f, args)
+    return nothing
+end
+
+function get_label(labels_stack, sym::Symbol)
+    for (depth, labels) = reverse(collect(enumerate(labels_stack)))
+        ns = findall(==(sym), labels)
+        length(ns) == 0 && continue
+        length(ns) == 1 && return Symbol("_"^depth, only(ns))
+        error("multiple arguments match $sym")
+    end
+    return sym
+end
+
+function number_label_args(ex, labels_stack = [])
+    ex isa Symbol && return get_label(labels_stack, ex)
+    @show ex
+    @show labels_stack
+    println()
+    maybe_lambda = parse_lambda(ex)
+    if !isnothing(maybe_lambda)
+        labels_stack_ = vcat(labels_stack, [maybe_lambda.args])
+        labels_stack = labels_stack_
+    end
+
+    if ex isa Expr
+        args_ = number_label_args.(ex.args, Ref(labels_stack))
+        return Expr(ex.head, args_...)
+    end
+
+    return ex   # LineNumberNode, etc.
+end
+
 =#
