@@ -31,10 +31,9 @@ struct Lambda{A, B}
     body::B
 end
 
-struct Call{F, A, K}
+struct Call{F, A}
     f::F
     args::A
-    kw::K
 end
 
 _Union() = Union{}
@@ -45,7 +44,7 @@ _Union(x...) = reduce(_Union, x)
 KeywordArgType(kwarg_names...) = _Union(sort(collect(kwarg_names))...)
 
 _typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(expr.args[1], _typed1(expr.args[2]))
-_typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(expr.args[1], expr.args[2:end], NamedTuple()) # TODO parse out kwargs from TypedExpr
+_typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(expr.args[1], expr.args[2:end]) # TODO handle TypedExpr with kwargs
 _typed1(x) = x
 
 
