@@ -73,7 +73,7 @@ function _normalize_lambda_1_arg(ex)
     return :(($(arg), ) -> $(body))
 end
 
-"""normalize `:(x -> $body)` into  `:((x,) -> $body`)"""
+"""normalize `:(x -> body)` into  `:((x,) -> body`)"""
 normalize_lambda_1_arg(ex) = MacroTools.prewalk(_normalize_lambda_1_arg, ex)
 
 # other order doesn't work. I suppose `striplines` introduces blocks
