@@ -19,7 +19,7 @@ function parse_call(ex)
     return nothing
 end
 
-make_label(depth, arg_i) = Symbol("_"^depth, arg_i)
+make_label(x) = Symbol("_"^x.antecedent_depth, x.arg_i)
 
 function parse_label(s)
     depth = 0
@@ -33,19 +33,20 @@ function parse_label(s)
 end
 parse_label(s::Symbol) = parse_label(string(s))
 
-function get_label(labels_stack, sym::Symbol)
-    for (depth, labels) = reverse(collect(enumerate(labels_stack)))
+function get_label(labeler, labels_stack, sym::Symbol, referent_depth)
+    for (antecedent_depth, labels) = reverse(collect(enumerate(labels_stack)))
         ns = findall(==(sym), labels)
         length(ns) == 0 && continue
-        length(ns) == 1 && return make_label(depth, only(ns))
+        arg_i = only(ns)
+        length(ns) == 1 && return labeler((; referent_depth, antecedent_depth, arg_i))
         error("multiple arguments match $sym")
     end
     startswith(string(sym), "_") && error("Cannot capture $sym because it conflicts with number label")
     return sym
 end
 
-function number_label_args(ex, labels_stack = [])
-    ex isa Symbol && return get_label(labels_stack, ex)
+function number_label_args(labeler, ex, labels_stack = [], this_depth = 0)
+    ex isa Symbol && return get_label(labeler, labels_stack, ex, this_depth)
 
     if ex isa Expr && ex.head == :(->)
         maybe_lambda = parse_lambda(ex)
@@ -54,7 +55,7 @@ function number_label_args(ex, labels_stack = [])
     end
 
     if ex isa Expr
-        args_ = number_label_args.(ex.args, Ref(labels_stack))
+        args_ = number_label_args.(Ref(labeler), ex.args, Ref(labels_stack), Ref(this_depth + 1))
         return Expr(ex.head, args_...)
     end
 
