@@ -134,32 +134,54 @@ test_lambdas = [
     (
         :(y -> *(x, y)),
         :(
-            Fix(*, Template((Some(x), ArgPos{1}())))
+            Fix(*, Template((Some(x), ArgPos(1))))
         )
     ),
     (
         :(x -> x),
-        missing # throw an error
+        missing # throw an error, use `identity`
     ),
     (
-        :(x -> identity(x)),
-        missing
-    ),
-    (
-        :((x) -> f(() -> x)),
-        missing # throw an error
+        :(x -> f(() -> x)),
+        missing # throw an error, use `identity`
     ),
     (
         :((f, x) -> f(() -> x)),
+        missing # throw an error, use `identity`
+    ),
+    (
+        :(x -> f(x)),
+        :(
+            Fix(
+                f,
+                Template((
+                    ArgPos(1)
+                ))
+            )
+        )   # technically contains more information than just `f`, because it limits it to being a 1-arg
+    ),
+    (
+        :((x...) -> f(x...)),
         missing # throw an error
     ),
     (
-        :((x) -> f(() -> identity(x))),
+        :(() -> g(x)),
+        :(
+            Fix(
+                g,
+                Template((
+                    Some(x)
+                ))
+            )
+        )
+    ),
+    (
+        :(x -> f(() -> g(x))),
         Fix(
             f,
             Template((
                 Fix(
-                    identity,
+                    g,
                     Template((
                         Scope(ArgPos(1))
                     ))
@@ -167,6 +189,25 @@ test_lambdas = [
             ))
         )
     ),
+    (
+        :((f, x) -> f(x),
+        # (f, x) -> Eval(() -> f(x))
+        #= ??
+        Fix(
+            Eval,
+            Template((
+                Fix(
+                    ArgPos(1),
+                    Template((
+                        ArgPos(2)
+                    ))
+                )
+            ))
+        )
+        =#
+        missing # this probably needs to be an error
+    ),
+
     (
         :((f, x) -> f(() -> identity(x))),
         missing
