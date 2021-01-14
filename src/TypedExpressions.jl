@@ -16,10 +16,13 @@ struct TypedExpr{H, A}
     args::A
 end
 
-_typed(expr::Expr) = TypedExpr(
-    _typed(expr.head),
-    _typed(expr.args)
-)
+function _typed(expr::Expr)
+    expr.head == :escape && return expr
+    TypedExpr(
+        _typed(expr.head),
+        _typed(expr.args)
+    )
+end
 
 struct EscVal{T}
 end
@@ -98,9 +101,26 @@ if VERSION >= v"1.6-"
     @test string(typeof(_typed1(_typed(ex)))) == "FixNew{Tuple{Val{:x}}, typeof(==), Tuple{Val{:x}, Int64}}"
 end
 
+_get(::Val{x}) where {x} = x
+
+# TODO wrap all initial `BoundSymbol` in some Escaping mechanism, and bail out on relabeling
+designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
+escape_all_symbols(ex) = MacroTools.postwalk(x -> x isa Symbol ? esc(x) : x, ex)
+
 macro tquote(ex)
-    # TODO wrap all initial `BoundSymbol` in some Escaping mechanism, and bail out on relabeling
-    marked_bound_vars = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
-    # TODO escape all `Val{::Symbol}`
-    all_typed(marked_bound_vars)
+    ex = clean_ex(ex) # just for debugging
+    marked_bound_vars = designate_bound_arguments(ex)
+    # all remaining `Symbol`s correspond to "free variables", and should be escaped so that they are evaluated in the macro call context.
+    free_esc = escape_all_symbols(marked_bound_vars)
+    ex1 = quote $(free_esc) end
+    ex2 = quote $(all_typed(free_esc)) end
+    return quote
+        global _ex1
+        global _ex2
+        _ex1 = $(string(ex1))
+        "
+
+        "
+        _ex2 = $(string(ex2))
+    end
 end
