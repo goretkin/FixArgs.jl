@@ -24,6 +24,12 @@ function _typed(expr::Expr)
     )
 end
 
+"""
+`Val{::Symbol}` comes to represent free variables in the λ calculus
+`BoundVal{::Symbol}` comes to represent bound variables in the λ calculus
+"""
+struct BoundVal{T}
+end
 struct EscVal{T}
 end
 
@@ -33,8 +39,9 @@ _typed(sym::Symbol) = Val(sym)
 # pass on anything that is already evaluated
 _typed(x) = x
 
-# if it was an evaluated `Val`, escape it to distinguish it from having originated with a ::Symbol
+# if it was an evaluated `Val`, etc., then escape it to distinguish it from having originated with a ::Symbol
 _typed(x::Val) = EscVal{typeof(x)}()
+_typed(x::BoundVal) = EscVal{typeof(x)}()
 _typed(x::EscVal) = EscVal{typeof(x)}()
 
 # because Symbol is already wrapped above, we can unquote `QuoteNode` of `Symbol`.
