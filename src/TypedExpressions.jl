@@ -9,6 +9,8 @@
 
 # In Julia 1.6 there is better printing of type aliases.
 # So I think there should just be a type alias with the name e.g. `Fix` for the common case to be concise.
+
+include("parse.jl")
 struct TypedExpr{H, A}
     head::H
     args::A
@@ -97,6 +99,8 @@ if VERSION >= v"1.6-"
 end
 
 macro tquote(ex)
-    # TODO escape unbound Symbols
-    _typed1(_typed(clean_ex(ex)))
+    # TODO wrap all initial `BoundSymbol` in some Escaping mechanism, and bail out on relabeling
+    marked_bound_vars = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
+    # TODO escape all `Val{::Symbol}`
+    all_typed(marked_bound_vars)
 end
