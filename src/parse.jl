@@ -45,22 +45,39 @@ function get_label(labeler, labels_stack, sym::Symbol, referent_depth)
     return sym
 end
 
-function number_label_args(labeler, ex, labels_stack = [], this_depth = 0)
+"""
+α-conversion in λ-calculus
+
+`labeler(x)`` produces a `Symbol` or similar from
+`x.referent_depth`
+`x.antecedent_depth`
+`x.arg_i`
+
+`x.referent_depth - x.antecedent_depth` is number of `->`s that are between the evaluation site and the definition site
+"""
+function relabel_args(labeler, ex, labels_stack = [], this_depth = 1)
     ex isa Symbol && return get_label(labeler, labels_stack, ex, this_depth)
 
+    next_depth = this_depth
     if ex isa Expr && ex.head == :(->)
         maybe_lambda = parse_lambda(ex)
         labels_stack_ = vcat(labels_stack, [maybe_lambda.args])
         labels_stack = labels_stack_
+        next_depth = this_depth + 1
+        args_ = relabel_args.(Ref(labeler), ex.args, Ref(labels_stack), (this_depth, next_depth))
+        return Expr(ex.head, args_...)
     end
 
     if ex isa Expr
-        args_ = number_label_args.(Ref(labeler), ex.args, Ref(labels_stack), Ref(this_depth + 1))
+        args_ = relabel_args.(Ref(labeler), ex.args, Ref(labels_stack), Ref(next_depth))
         return Expr(ex.head, args_...)
     end
 
     return ex   # LineNumberNode, etc.
 end
+
+# spot-check behavior
+@show relabel_args(x -> Symbol(string(x)), :(x -> (y -> x + y)))
 
 function findonly(f, v)
     rs = findall(f, v)
