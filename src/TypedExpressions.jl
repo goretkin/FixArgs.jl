@@ -97,7 +97,11 @@ _ex_3 = :(x -> $(==)(x, :zero))
 _ex_4 = :(x -> $(==)(x, $(Val(0))))
 _ex_5 = :(x -> $(==)(x, $(EscVal{Val(0)}())))
 
-all_typed(ex) = _typed1(_typed(clean_ex(ex)))
+all_typed(ex) = begin
+    #println("all_typed")
+    #dump(ex)
+    _typed1(_typed(clean_ex(ex)))
+end
 ex = all_typed(_ex_2)
 
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
@@ -114,20 +118,19 @@ _get(::Val{x}) where {x} = x
 designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
 escape_all_symbols(ex) = MacroTools.postwalk(x -> x isa Symbol ? esc(x) : x, ex)
 
-macro tquote(ex)
+macro quote1(ex)
     ex = clean_ex(ex) # just for debugging
     marked_bound_vars = designate_bound_arguments(ex)
     # all remaining `Symbol`s correspond to "free variables", and should be escaped so that they are evaluated in the macro call context.
     free_esc = escape_all_symbols(marked_bound_vars)
-    ex1 = quote $(free_esc) end
-    ex2 = quote $(all_typed(free_esc)) end
-    return quote
-        global _ex1
-        global _ex2
-        _ex1 = $(string(ex1))
-        "
+    return marked_bound_vars # free_esc
+end
 
-        "
-        _ex2 = $(string(ex2))
+macro quote2(ex)
+    ex1 = @quote1 ex
+    println(ex1)
+    ex2 = all_typed(ex1)
+    quote
+        $(ex2)
     end
 end
