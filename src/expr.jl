@@ -70,7 +70,9 @@ for t in expr_tests
 end
 
 # TODO escape Symbols and "." headed expressions so that the following work correctly.
-
+# but not if the expression indicates broadcasting...
+# this distinction is handled by the `Meta.lower` pass...
+# perhaps instead the strategy is not to escape all symbols, but to escape everything that isn't a :call or a :->
 dump(let x = 9
     @xquote Base.sqrt(x)
 end)
