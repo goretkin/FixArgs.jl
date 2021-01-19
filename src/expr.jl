@@ -31,7 +31,23 @@ end
 uneval(x) = Meta.quot(x)
 # uneval(x) = Meta.QuoteNode(x)
 
-escape_all_symbols(ex) = MacroTools.postwalk(x -> x isa Symbol ? esc(x) : x, ex)
+function do_escape(s::Symbol)
+    return true
+end
+
+function do_escape(s::QuoteNode)
+    @show s
+    return true
+end
+
+function do_escape(e::Expr)
+    e.head === :call && return false
+    e.head === :-> && return false
+    return true
+end
+# TODO if an expression is escaped, then do not keep recursing
+# because right now generating e.g. `"(escape Base).((escape (inert sqrt)))"` which is invalid syntax.
+escape_all_but(ex) = MacroTools.postwalk(x -> do_escape(x) ? esc(x) : x, ex)
 
 """
 e.g.
@@ -45,7 +61,7 @@ Expr
         2: Int64 9
 """
 macro xquote(ex)
-    uneval(escape_all_symbols(ex))
+    uneval(escape_all_but(ex))
 end
 
 
@@ -69,10 +85,9 @@ for t in expr_tests
     @test isequal(t[1], t[2])
 end
 
-# TODO escape Symbols and "." headed expressions so that the following work correctly.
-# but not if the expression indicates broadcasting...
-# this distinction is handled by the `Meta.lower` pass...
-# perhaps instead the strategy is not to escape all symbols, but to escape everything that isn't a :call or a :->
+
+# see TODO about escaping. these are not producing valid syntax.
+#=
 dump(let x = 9
     @xquote Base.sqrt(x)
 end)
@@ -80,3 +95,4 @@ end)
 dump(let x = 9, sqrt=sin
     @xquote Base.sqrt(x)
 end)
+=#
