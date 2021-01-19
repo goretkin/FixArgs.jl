@@ -4,6 +4,10 @@ struct BoundSymbol
     _::Symbol
 end
 
+struct ArgSymbol
+    _::Symbol
+end
+
 function parse_lambda(ex)
     arrow = :(->)
     matched = @capture ex (args__,) -> body_
