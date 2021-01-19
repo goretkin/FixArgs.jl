@@ -48,10 +48,6 @@ macro xquote(ex)
     uneval(escape_all_symbols(ex))
 end
 
-macro xquote_sqrt_x(ex)
-    uneval(Expr(:call, esc(:sqrt), esc(:x)))
-end
-
 dump(let x = 9
     @xquote sqrt(x)
 end)
@@ -60,10 +56,12 @@ dump(let x = 9, sqrt=sin
     @xquote sqrt(x)
 end)
 
+# TODO escape Symbols and "." headed expressions so that the following work correctly.
+
 dump(let x = 9
-    @xquote_sqrt_x :blah
+    @xquote Base.sqrt(x)
 end)
 
 dump(let x = 9, sqrt=sin
-    @xquote_sqrt_x :blah
+    @xquote Base.sqrt(x)
 end)
