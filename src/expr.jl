@@ -1,11 +1,18 @@
-using MacroTools
-using MacroTools: postwalk
+using MacroTools: MacroTools
 
-function touch(ex)
-    println(ex)
-    return ex
-end
-postwalk_touch(ex) = postwalk(touch , ex)
+# copied from MacroTools:
+walk(x, inner, outer) = outer(x)
+walk(x::Expr, inner, outer) = outer(Expr(x.head, map(inner, x.args)...))
+
+"""
+    postwalk(f, expr)
+
+Applies `f` to each node in the given expression tree, returning the result.
+`f` sees expressions *after* they have been transformed by the walk.
+
+See also: [`prewalk`](@ref).
+"""
+postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
 
 
 """
@@ -47,7 +54,7 @@ function do_escape(e::Expr)
 end
 # TODO if an expression is escaped, then do not keep recursing
 # because right now generating e.g. `"(escape Base).((escape (inert sqrt)))"` which is invalid syntax.
-escape_all_but(ex) = MacroTools.postwalk(x -> do_escape(x) ? esc(x) : x, ex)
+escape_all_but(ex) = postwalk(x -> do_escape(x) ? esc(x) : x, ex)
 
 """
 e.g.
