@@ -48,13 +48,26 @@ macro xquote(ex)
     uneval(escape_all_symbols(ex))
 end
 
-dump(let x = 9
-    @xquote sqrt(x)
-end)
 
-dump(let x = 9, sqrt=sin
-    @xquote sqrt(x)
-end)
+using Test: @test
+expr_tests = [
+    (
+        (let x = 9
+            @xquote sqrt(x)
+        end),
+        :($(sqrt)(9))
+    ),
+    (
+        (let x = 9, sqrt=sin
+            @xquote sqrt(x)
+        end),
+        :($(sin)(9))
+    )
+]
+
+for t in expr_tests
+    @test isequal(t[1], t[2])
+end
 
 # TODO escape Symbols and "." headed expressions so that the following work correctly.
 
