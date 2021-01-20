@@ -9,16 +9,20 @@
 
 # In Julia 1.6 there is better printing of type aliases.
 # So I think there should just be a type alias with the name e.g. `Fix` for the common case to be concise.
-module TypedExpressions
+# module TypedExpressions
 
 include("parse.jl")
+include("expr.jl")
 struct TypedExpr{H, A}
     head::H
     args::A
 end
 
+# TODO define something like the following to mirror `Expr`
+# TypedExpr(head, args...) = TypedExpr(head, args)
+
 function _typed(expr::Expr)
-    expr.head == :escape && return expr
+    expr.head === :escape && return expr
     TypedExpr(
         _typed(expr.head),
         _typed(expr.args)
@@ -37,6 +41,7 @@ end
 _typed(args::Vector) = tuple(map(_typed, args)...)
 _typed(sym::Symbol) = Val(sym)
 
+#=
 # pass on anything that is already evaluated
 _typed(x) = x
 
@@ -49,6 +54,26 @@ _typed(x::EscVal) = EscVal{typeof(x)}()
 # e.g. ``:(:x)`` to ``:x`
 # TODO perhaps not just `Symbol`?
 _typed(x::QuoteNode) = x.value isa Symbol ? x.value : x
+=#
+
+function uneval(x::TypedExpr)
+    # the `TypedExpr` below is assumed to be available in the scope
+    :(TypedExpr(
+        $(uneval(x.head)),
+        $(uneval(x.args))
+    ))
+end
+
+function uneval(x::Val{T}) where T
+    # assumed to be available in the scope
+    :(Val($(uneval(T))))
+end
+
+function uneval(x::Tuple)
+    Expr(:tuple, map(uneval, x)...)
+    # :($(map(uneval, x)...))
+end
+
 struct Args{P, KW}
 end
 
@@ -62,6 +87,9 @@ struct Call{F, A}
     args::A
 end
 
+uneval(x::Lambda) = :(Lambda($(uneval(x.args)), $(uneval(x.body))))
+uneval(x::Call) = :(Call($(uneval(x.f)), $(uneval(x.args))))
+
 _Union() = Union{}
 _Union(x) = Union{x}
 _Union(a, b) = Union{a, b}
@@ -70,9 +98,14 @@ _Union(x...) = reduce(_Union, x)
 KeywordArgType(kwarg_names...) = _Union(sort(collect(kwarg_names))...)
 
 _typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(_typed1(expr.args[1]), _typed1(expr.args[2]))
-_typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(expr.args[1], expr.args[2:end]) # TODO handle TypedExpr with kwargs
-_typed1(expr::TypedExpr{Val{:tuple}, X}) where {X} = expr.args
-_typed1(x) = x
+_typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(_typed1(expr.args[1]), map(_typed1, expr.args[2:end])) # TODO handle TypedExpr with kwargs
+_typed1(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(_typed1, expr.args)
+function _typed1(expr::Expr)
+    expr.head === :escape && return expr
+    error("_typed1(::Expr) unexpected head: $(expr)")
+end
+
+# _typed1(x) = x
 
 using MacroTools: MacroTools, striplines, flatten
 
@@ -116,6 +149,15 @@ escape_all_symbols(ex) = MacroTools.postwalk(x -> x isa Symbol ? esc(x) : x, ex)
 ArgSymbol_to_Symbol(ex) = MacroTools.postwalk(x -> x isa ArgSymbol ? esc(x._) : x, ex)
 escape_all_Val_symbols(ex) = MacroTools.postwalk(x -> x isa Val ? esc(_get(x)) : x, ex)
 
+macro xquote1(ex)
+    uneval(all_typed(escape_all_but(ex)))
+end
+
+macro xquote2(ex)
+    uneval(_typed(clean_ex(escape_all_but(ex))))
+end
+
+
 function quote1(ex)
     ex = clean_ex(ex) # just for debugging
     marked_bound_vars = designate_bound_arguments(ex)
@@ -124,10 +166,6 @@ function quote1(ex)
     @show esc(:y)
     return free_esc
     # return ArgSymbol_to_Symbol(free_esc)
-end
-
-macro quote1(ex)
-    quote1(ex)
 end
 
 macro quote2(ex)
@@ -141,21 +179,21 @@ macro quote2(ex)
     ex3 = escape_all_Val_symbols(ex2)
     return ex2
 end
-end
+# end
 
 macro _test1(ex)
     quote
         ($ex, $(esc(ex)))
     end
 end
-using .TypedExpressions: EscVal, all_typed
+# using .TypedExpressions: EscVal, all_typed, uneval
 _ex_1 = :(x -> ==(x, 0))
 _ex_2 = :(x -> $(==)(x, 0))
 _ex_3 = :(x -> $(==)(x, :zero))
 _ex_4 = :(x -> $(==)(x, $(Val(0))))
 _ex_5 = :(x -> $(==)(x, $(EscVal{Val(0)}())))
 
-ex = all_typed(_ex_2)
+# ex = all_typed(_ex_2)
 
 using Test
 if VERSION >= v"1.6-"
