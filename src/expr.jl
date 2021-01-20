@@ -24,7 +24,10 @@ walk will be applied to whatever `f` returns.
 This makes `prewalk` somewhat prone to infinite loops; you probably want to try
 [`postwalk`](@ref) first.
 """
-prewalk(f, x)  = walk(f(x), x -> prewalk(f, x), identity)
+function prewalk(f, x, state)
+    (x′, state′) = f(x, state)
+    walk(x′, x -> prewalk(f, x, state′), identity)
+end
 
 
 """
@@ -64,9 +67,20 @@ function do_escape(e::Expr)
     e.head === :-> && return false
     return true
 end
-# TODO if an expression is escaped, then do not keep recursing
-# because right now generating e.g. `"(escape Base).((escape (inert sqrt)))"` which is invalid syntax.
-escape_all_but(ex) = postwalk(x -> do_escape(x) ? esc(x) : x, ex)
+
+function walk_f(x, s)
+    if s === :escaped
+        (x, s)
+    elseif s === :init
+        if do_escape(x)
+            (esc(x), :escaped)
+        else
+            (x, s)
+        end
+    end
+end
+
+escape_all_but(ex) = prewalk(walk_f, ex, :init)
 
 """
 e.g.
@@ -84,7 +98,7 @@ macro xquote(ex)
 end
 
 
-using Test: @test
+using Test: @test, @testset
 expr_tests = [
     (
         (let x = 9
@@ -97,21 +111,23 @@ expr_tests = [
             @xquote sqrt(x)
         end),
         :($(sin)(9))
+    ),
+    (
+        (let x = 9
+            @xquote Base.sqrt(x)
+        end),
+        :($(sqrt)(9))
+    ),
+    (
+        (let x = 9, sqrt=sin
+            @xquote Base.sqrt(x)
+        end),
+        :($(sqrt)(9))
     )
 ]
 
-for t in expr_tests
-    @test isequal(t[1], t[2])
+@testset begin
+    for t in expr_tests
+        @test isequal(t[1], t[2])
+    end
 end
-
-
-# see TODO about escaping. these are not producing valid syntax.
-#=
-dump(let x = 9
-    @xquote Base.sqrt(x)
-end)
-
-dump(let x = 9, sqrt=sin
-    @xquote Base.sqrt(x)
-end)
-=#
