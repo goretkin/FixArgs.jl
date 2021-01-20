@@ -13,6 +13,8 @@
 
 include("parse.jl")
 include("expr.jl")
+include("show.jl")
+
 struct TypedExpr{H, A}
     head::H
     args::A
