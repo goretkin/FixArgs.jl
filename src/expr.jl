@@ -14,6 +14,18 @@ See also: [`prewalk`](@ref).
 """
 postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
 
+"""
+    prewalk(f, expr)
+
+Applies `f` to each node in the given expression tree, returning the result.
+`f` sees expressions *before* they have been transformed by the walk, and the
+walk will be applied to whatever `f` returns.
+
+This makes `prewalk` somewhat prone to infinite loops; you probably want to try
+[`postwalk`](@ref) first.
+"""
+prewalk(f, x)  = walk(f(x), x -> prewalk(f, x), identity)
+
 
 """
 e.g.
