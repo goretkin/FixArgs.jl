@@ -74,6 +74,8 @@ function do_escape(e::ArgSymbol)
     return false
 end
 
+do_escape(e) = false # all else
+
 function walk_f(x, s)
     if s === :init && do_escape(x)
         (esc(x), :escaped)

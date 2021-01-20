@@ -42,6 +42,7 @@ _typed(args::Vector) = tuple(map(_typed, args)...)
 _typed(sym::Symbol) = Val(sym)
 _typed(x::BoundSymbol) = x
 _typed(x::ArgSymbol) = x
+_typed(x) = x
 
 #=
 # pass on anything that is already evaluated
@@ -109,6 +110,7 @@ end
 
 _typed1(x::BoundSymbol) = x
 _typed1(x::ArgSymbol) = x
+_typed1(x) = x
 
 # _typed1(x) = x
 
@@ -155,6 +157,7 @@ ArgSymbol_to_Symbol(ex) = MacroTools.postwalk(x -> x isa ArgSymbol ? esc(x._) : 
 escape_all_Val_symbols(ex) = MacroTools.postwalk(x -> x isa Val ? esc(_get(x)) : x, ex)
 
 macro xquote1(ex)
+    # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
     uneval(all_typed(escape_all_but(designate_bound_arguments(clean_ex(ex)))))
 end
 
