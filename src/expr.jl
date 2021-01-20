@@ -69,14 +69,10 @@ function do_escape(e::Expr)
 end
 
 function walk_f(x, s)
-    if s === :escaped
+    if s === :init && do_escape(x)
+        (esc(x), :escaped)
+    else
         (x, s)
-    elseif s === :init
-        if do_escape(x)
-            (esc(x), :escaped)
-        else
-            (x, s)
-        end
     end
 end
 
