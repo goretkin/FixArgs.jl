@@ -6,6 +6,14 @@ module Show
 
 using Base: @nospecialize, inferencebarrier, show_circular
 
+function _show_without_type_parameters(io::IO, @nospecialize(x))
+    t = typeof(x)
+    print(io, t.name.name)
+    print(io, '(')
+    show_fields(io, x)
+    print(io, ')')
+end
+
 function _show_default(io::IO, @nospecialize(x))
     t = typeof(x)
     show(io, inferencebarrier(t))

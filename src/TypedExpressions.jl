@@ -95,6 +95,9 @@ end
 uneval(x::Lambda) = :(Lambda($(uneval(x.args)), $(uneval(x.body))))
 uneval(x::Call) = :(Call($(uneval(x.f)), $(uneval(x.args))))
 
+Base.show(io::IO, x::Lambda) = Show._show_without_type_parameters(io, x)
+Base.show(io::IO, x::Call) = Show._show_without_type_parameters(io, x)
+
 _Union() = Union{}
 _Union(x) = Union{x}
 _Union(a, b) = Union{a, b}
@@ -143,6 +146,23 @@ all_typed(ex) = begin
 end
 
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
+
+# define constructor consistent with type alias
+function FixNew(args_in, f, args_call)
+    Lambda(args_in, Call(f, args_call))
+end
+
+# show consistent with constructor that is consistent with type alias
+function Base.show(io::IO, x::FixNew)
+    print(io, "FixNew")
+    print(io, "(")
+    show(io, x.args)
+    print(io, ",")
+    show(io, x.body.f)
+    print(io, ",")
+    show(io, x.body.args)
+    print(io, ")")
+end
 
 _get(::Val{x}) where {x} = x
 
