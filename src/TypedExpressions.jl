@@ -40,6 +40,8 @@ end
 
 _typed(args::Vector) = tuple(map(_typed, args)...)
 _typed(sym::Symbol) = Val(sym)
+_typed(x::BoundSymbol) = x
+_typed(x::ArgSymbol) = x
 
 #=
 # pass on anything that is already evaluated
@@ -105,6 +107,9 @@ function _typed1(expr::Expr)
     error("_typed1(::Expr) unexpected head: $(expr)")
 end
 
+_typed1(x::BoundSymbol) = x
+_typed1(x::ArgSymbol) = x
+
 # _typed1(x) = x
 
 using MacroTools: MacroTools, striplines, flatten
@@ -139,7 +144,7 @@ _get(::Val{x}) where {x} = x
 
 # TODO wrap all initial `BoundSymbol` in some Escaping mechanism, and bail out on relabeling
 _relabeler(x) = if x.referent_depth - x.antecedent_depth == 0
-    x.sym
+    ArgSymbol(x.sym)
 else
     BoundSymbol(x.sym)
 end
@@ -150,7 +155,7 @@ ArgSymbol_to_Symbol(ex) = MacroTools.postwalk(x -> x isa ArgSymbol ? esc(x._) : 
 escape_all_Val_symbols(ex) = MacroTools.postwalk(x -> x isa Val ? esc(_get(x)) : x, ex)
 
 macro xquote1(ex)
-    uneval(all_typed(escape_all_but(clean_ex(ex))))
+    uneval(all_typed(escape_all_but(designate_bound_arguments(clean_ex(ex)))))
 end
 
 macro xquote2(ex)

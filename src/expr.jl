@@ -66,6 +66,14 @@ function do_escape(e::Expr)
     return true
 end
 
+function do_escape(e::BoundSymbol)
+    return false
+end
+
+function do_escape(e::ArgSymbol)
+    return false
+end
+
 function walk_f(x, s)
     if s === :init && do_escape(x)
         (esc(x), :escaped)
