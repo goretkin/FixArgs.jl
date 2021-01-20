@@ -150,11 +150,11 @@ ArgSymbol_to_Symbol(ex) = MacroTools.postwalk(x -> x isa ArgSymbol ? esc(x._) : 
 escape_all_Val_symbols(ex) = MacroTools.postwalk(x -> x isa Val ? esc(_get(x)) : x, ex)
 
 macro xquote1(ex)
-    uneval(all_typed(escape_all_but(ex)))
+    uneval(all_typed(escape_all_but(clean_ex(ex))))
 end
 
 macro xquote2(ex)
-    uneval(_typed(clean_ex(escape_all_but(ex))))
+    uneval(_typed(escape_all_but(clean_ex(ex))))
 end
 
 
