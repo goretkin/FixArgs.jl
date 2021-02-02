@@ -47,7 +47,6 @@ end
 _typed(args::Vector) = tuple(map(_typed, args)...)
 _typed(sym::Symbol) = Val(sym)
 _typed(x::BoundSymbol) = x
-_typed(x::ArgSymbol) = x
 _typed(x) = x
 
 #=
@@ -181,7 +180,6 @@ function _typed1(expr::Expr)
 end
 
 _typed1(x::BoundSymbol) = x
-_typed1(x::ArgSymbol) = x
 _typed1(x) = x
 
 # _typed1(x) = x
@@ -267,17 +265,9 @@ end
 _get(::Val{x}) where {x} = x
 
 # TODO wrap all initial `BoundSymbol` in some Escaping mechanism, and bail out on relabeling
-_relabeler(x) = if x.referent_depth - x.antecedent_depth == 0
-    #ArgSymbol(x.sym)
-    BoundSymbol(x.sym)
-else
-    BoundSymbol(x.sym)
-end
+_relabeler(x) = BoundSymbol(x.sym)
 
 designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, _relabeler, ex)
-escape_all_symbols(ex) = MacroTools.postwalk(x -> x isa Symbol ? esc(x) : x, ex)
-ArgSymbol_to_Symbol(ex) = MacroTools.postwalk(x -> x isa ArgSymbol ? esc(x._) : x, ex)
-escape_all_Val_symbols(ex) = MacroTools.postwalk(x -> x isa Val ? esc(_get(x)) : x, ex)
 
 function normalize_bound_vars(ex)
     ex1 = relabel_args(

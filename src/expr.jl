@@ -71,10 +71,6 @@ function do_escape(e::BoundSymbol)
     return false
 end
 
-function do_escape(e::ArgSymbol)
-    return false
-end
-
 do_escape(e) = false # all else
 
 function _apply_once(check, apply)
