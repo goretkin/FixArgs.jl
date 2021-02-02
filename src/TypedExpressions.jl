@@ -11,6 +11,10 @@
 # So I think there should just be a type alias with the name e.g. `Fix` for the common case to be concise.
 module TypedExpressions
 
+# export so that Julia v1.6 type alias printing works
+# but not FixNew to not inhibit other type aliases: https://github.com/JuliaLang/julia/issues/39492
+export Fix1, Fix2
+
 include("parse.jl")
 include("expr.jl")
 include("show.jl")
@@ -224,6 +228,39 @@ function Base.show(io::IO, x::FixNew)
     show(io, x.body.f)
     print(io, ",")
     show(io, x.body.args)
+    print(io, ")")
+end
+
+# TODO will be `Some{T}`, not `T`, on the rhs
+const Fix1{F, T} = FixNew{typeof(Arity(1)), F, Tuple{T, typeof(ArgPos(1))}}
+const Fix2{F, T} = FixNew{typeof(Arity(1)), F, Tuple{typeof(ArgPos(1)), T}}
+
+# define constructor consistent with type alias
+function Fix1(f, x)
+    FixNew(Arity(1), f, (x, ArgPos(1)))
+end
+
+function Fix2(f, x)
+    FixNew(Arity(1), f, (ArgPos(1), x))
+end
+
+# show consistent with constructor that is consistent with type alias
+
+function Base.show(io::IO, x::Fix1)
+    print(io, "Fix1")
+    print(io, "(")
+    show(io, x.body.f)
+    print(io, ",")
+    show(io, x.body.args[1])
+    print(io, ")")
+end
+
+function Base.show(io::IO, x::Fix2)
+    print(io, "Fix2")
+    print(io, "(")
+    show(io, x.body.f)
+    print(io, ",")
+    show(io, x.body.args[2])
     print(io, ")")
 end
 

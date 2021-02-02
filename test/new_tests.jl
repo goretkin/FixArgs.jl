@@ -1,6 +1,5 @@
-using Test
+using FixArgs: FixArgs
 using FixArgs.TypedExpressions: @quote_some, @xquote, relabel_args
-
 using Test: @test, @testset
 using MacroTools: @capture
 
@@ -57,6 +56,16 @@ expr_tests = [
     for t in expr_tests
         @test isequal(t[1], t[2])
     end
+end
+
+@testset "@xquote and Fix1, Fix2" begin
+    @test (@xquote x -> ==(1, x)) == FixArgs.TypedExpressions.Fix1(==, 1)
+    @test (@xquote x -> ==(x, 1)) == FixArgs.TypedExpressions.Fix2(==, 1)
+    @test (@xquote x -> x == 1) == FixArgs.TypedExpressions.Fix2(==, 1)
+    @test (@xquote (x,) -> ==(x, 1)) == FixArgs.TypedExpressions.Fix2(==, 1)
+    @test (@xquote xyz -> ==(xyz, 1)) == FixArgs.TypedExpressions.Fix2(==, 1)
+    @test (let one = 1; @xquote x -> ==(x, one) end) == FixArgs.TypedExpressions.Fix2(==, 1)
+    @test (let one = 1, eq = ==; @xquote x -> eq(x, one) end) == FixArgs.TypedExpressions.Fix2(==, 1)
 end
 
 macro _test1(ex)
