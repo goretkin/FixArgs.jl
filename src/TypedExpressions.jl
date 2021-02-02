@@ -79,13 +79,13 @@ function uneval(x::Tuple)
     # :($(map(uneval, x)...))
 end
 
-struct Args{P, KW}
+struct Arity{P, KW}
 end
 
-function Args(arity)
-    # TODO choose a representation for keyword arguments
-    NoKeywordArguments = Nothing
-    return Args{arity, NoKeywordArguments}()
+# TODO choose a representation for keyword arguments
+const NoKeywordArguments = Nothing
+function Arity(p_arity, kw_arity = NoKeywordArguments)
+    return Arity{p_arity, NoKeywordArguments}()
 end
 struct ArgPos{N}
 end
@@ -103,7 +103,7 @@ end
 
 ParentScope(arg) = ParentScope{arg}()
 
-uneval(x::Args{P, KW}) where {P, KW} = :(Args{$(uneval(P)), $(uneval(KW))}())
+uneval(x::Arity{P, KW}) where {P, KW} = :(Arity{$(uneval(P)), $(uneval(KW))}())
 uneval(x::ArgPos{N}) where {N} = :(ArgPos($(uneval(N))))
 uneval(x::ParentScope{T}) where {T} = :(ParentScope($(uneval(T))))
 
@@ -254,7 +254,7 @@ function normalize_bound_vars(ex)
 
     function apply(ex)
         n = length(ex.args)
-        return Args(n)
+        return Arity(n)
     end
 
     return apply_once(check, apply, ex1)
