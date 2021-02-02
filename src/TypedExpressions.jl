@@ -180,35 +180,13 @@ escape_all_Val_symbols(ex) = MacroTools.postwalk(x -> x isa Val ? esc(_get(x)) :
 
 macro xquote1(ex)
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
-    uneval(all_typed(escape_all_but(designate_bound_arguments(clean_ex(ex)))))
+    ex1 = clean_ex(ex)
+    ex2 = designate_bound_arguments(ex1)
+    # escape everything that isn't a bound variable, so that they are evaluated in the macro call context.
+    ex3 = escape_all_but(ex2)
+    uneval(all_typed(ex3))
 end
 
-macro xquote2(ex)
-    uneval(_typed(escape_all_but(clean_ex(ex))))
-end
-
-
-function quote1(ex)
-    ex = clean_ex(ex) # just for debugging
-    marked_bound_vars = designate_bound_arguments(ex)
-    # all remaining `Symbol`s correspond to "free variables", and should be escaped so that they are evaluated in the macro call context.
-    free_esc = escape_all_symbols(marked_bound_vars)
-    @show esc(:y)
-    return free_esc
-    # return ArgSymbol_to_Symbol(free_esc)
-end
-
-macro quote2(ex)
-    # ex1 = @quote1 ex
-    ex0 = designate_bound_arguments(ex)
-    # ex1 = escape_all_symbols(ex0)
-    ex1 = ex0
-    # println(ex1)
-    val = all_typed(ex1)
-    ex2 = quote $(esc(val)) end
-    ex3 = escape_all_Val_symbols(ex2)
-    return ex2
-end
 # end
 
 macro _test1(ex)
