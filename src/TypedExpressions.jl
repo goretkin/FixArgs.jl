@@ -82,6 +82,11 @@ end
 struct Args{P, KW}
 end
 
+function Args(arity)
+    # TODO choose a representation for keyword arguments
+    NoKeywordArguments = Nothing
+    return Args{arity, NoKeywordArguments}()
+end
 struct ArgPos{N}
 end
 
@@ -249,14 +254,11 @@ function normalize_bound_vars(ex)
 
     function apply(ex)
         n = length(ex.args)
-        # TODO choose a representation for keyword arguments
-        NoKeywordArguments = Nothing
-        return Args{n, NoKeywordArguments}()
+        return Args(n)
     end
 
     return apply_once(check, apply, ex1)
 end
-
 
 macro xquote(ex)
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
