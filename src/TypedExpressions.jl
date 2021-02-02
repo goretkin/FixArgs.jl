@@ -98,13 +98,15 @@ uneval(x::Call) = :(Call($(uneval(x.f)), $(uneval(x.args))))
 Base.show(io::IO, x::Lambda) = Show._show_without_type_parameters(io, x)
 Base.show(io::IO, x::Call) = Show._show_without_type_parameters(io, x)
 
+#=
+# Try to represent an unordered collection as a type, to represent keyword arguments.
 _Union() = Union{}
 _Union(x) = Union{x}
 _Union(a, b) = Union{a, b}
 _Union(x...) = reduce(_Union, x)
 
 KeywordArgType(kwarg_names...) = _Union(sort(collect(kwarg_names))...)
-
+=#
 _typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(_typed1(expr.args[1]), _typed1(expr.args[2]))
 _typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(_typed1(expr.args[1]), map(_typed1, expr.args[2:end])) # TODO handle TypedExpr with kwargs
 _typed1(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(_typed1, expr.args)
