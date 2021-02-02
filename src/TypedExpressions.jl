@@ -264,10 +264,7 @@ end
 
 _get(::Val{x}) where {x} = x
 
-# TODO wrap all initial `BoundSymbol` in some Escaping mechanism, and bail out on relabeling
-_relabeler(x) = BoundSymbol(x.sym)
-
-designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, _relabeler, ex)
+designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
 
 function normalize_bound_vars(ex)
     ex1 = relabel_args(
@@ -289,6 +286,8 @@ end
 
 macro xquote(ex)
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
+    # otherwise cannot distinguish between original `BoundSymbol` and output of `designate_bound_arguments`
+    # Then theese escaped `BoundSymbol`s should not be touched by `normalize_bound_vars`
     ex1 = clean_ex(ex)
     ex2 = designate_bound_arguments(ex1)
     # escape everything that isn't a bound variable, so that they are evaluated in the macro call context.
@@ -296,21 +295,6 @@ macro xquote(ex)
     ex4 = normalize_bound_vars(ex3)
     val = all_typed(ex4)
     uneval(val) # note: uneval handles `Expr(:escape, ...)` specially.
-end
-
-macro xquote_3(ex)
-    ex1 = clean_ex(ex)
-    ex2 = designate_bound_arguments(ex1)
-    ex3 = escape_all_but(ex2)
-    uneval(ex3)
-end
-
-macro xquote_4(ex)
-    ex1 = clean_ex(ex)
-    ex2 = designate_bound_arguments(ex1)
-    ex3 = escape_all_but(ex2)
-    ex4 = normalize_bound_vars(ex3)
-    uneval(ex4)
 end
 
 end
