@@ -76,15 +76,18 @@ end
 
 do_escape(e) = false # all else
 
-function walk_f(x, s)
-    if s === :init && do_escape(x)
-        (esc(x), :escaped)
-    else
-        (x, s)
+function escape_once(do_escape)
+    function walk_f(x, s)
+        if s === :init && do_escape(x)
+            (esc(x), :escaped)
+        else
+            (x, s)
+        end
     end
+    return walk_f
 end
 
-escape_all_but(ex) = prewalk(walk_f, ex, :init)
+escape_all_but(ex) = prewalk(escape_once(do_escape), ex, :init)
 
 """
 e.g.
