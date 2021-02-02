@@ -4,14 +4,11 @@ using FixArgs.TypedExpressions: @quote_some, @xquote, relabel_args
 using Test: @test, @testset
 using MacroTools: @capture
 
-# spot-check behavior
 @testset "relabel_args" begin
     ex = relabel_args(x -> x isa Symbol, x -> Symbol(string(x)), :(x -> (y -> x + y)))
-    @capture ex arg1_ -> body1_
+    @capture ex arg1_ -> (arg2_ -> term1_ + term2_)
     @test arg1 == Symbol("(referent_depth = 1, antecedent_depth = 1, arg_i = 1, sym = :x)")
-    @capture body1 arg2_ -> body2_
     @test arg2 == Symbol("(referent_depth = 2, antecedent_depth = 2, arg_i = 1, sym = :y)")
-    @capture body2 term1_ + term2_
     @test term1 == Symbol("(referent_depth = 3, antecedent_depth = 1, arg_i = 1, sym = :x)")
     @test term2 == Symbol("(referent_depth = 3, antecedent_depth = 2, arg_i = 1, sym = :y)")
 end
