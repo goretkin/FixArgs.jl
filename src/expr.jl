@@ -63,7 +63,8 @@ end
 function do_escape(e::Expr)
     e.head === :call && return false
     e.head === :-> && return false
-    return true
+    e.head === :tuple && return false # preserve argument (args[1]) of a `->`
+    return true # to escape e.g. `Base.sqrt`
 end
 
 function do_escape(e::BoundSymbol)

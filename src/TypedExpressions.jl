@@ -82,6 +82,26 @@ end
 struct Args{P, KW}
 end
 
+struct ArgPos{N}
+end
+
+ArgPos(i) = ArgPos{i}()
+
+function arg_pos(i, p)
+    p >=0 || error()
+    p == 0 && return BoundSymbol(:_)
+    p == 1 && return ArgPos(i)
+    ParentScope(arg_pos(i, p - 1))
+end
+struct ParentScope{T}
+end
+
+ParentScope(arg) = ParentScope{arg}()
+
+uneval(x::Args{P, KW}) where {P, KW} = :(Args{$(uneval(P)), $(uneval(KW))}())
+uneval(x::ArgPos{N}) where {N} = :(ArgPos($(uneval(N))))
+uneval(x::ParentScope{T}) where {T} = :(ParentScope($(uneval(T))))
+
 struct Lambda{A, B}
     args::A
     body::B
@@ -170,7 +190,8 @@ _get(::Val{x}) where {x} = x
 
 # TODO wrap all initial `BoundSymbol` in some Escaping mechanism, and bail out on relabeling
 _relabeler(x) = if x.referent_depth - x.antecedent_depth == 0
-    ArgSymbol(x.sym)
+    #ArgSymbol(x.sym)
+    BoundSymbol(x.sym)
 else
     BoundSymbol(x.sym)
 end
@@ -180,12 +201,48 @@ escape_all_symbols(ex) = MacroTools.postwalk(x -> x isa Symbol ? esc(x) : x, ex)
 ArgSymbol_to_Symbol(ex) = MacroTools.postwalk(x -> x isa ArgSymbol ? esc(x._) : x, ex)
 escape_all_Val_symbols(ex) = MacroTools.postwalk(x -> x isa Val ? esc(_get(x)) : x, ex)
 
+function normalize_bound_vars(ex)
+    ex1 = relabel_args(
+        x -> x isa BoundSymbol,
+        x -> arg_pos(x.arg_i, x.referent_depth - x.antecedent_depth),
+    ex)
+
+    function check(ex)
+        ex isa Expr && ex.head === :tuple && all(==(BoundSymbol(:_)), ex.args)
+    end
+
+    function apply(ex)
+        n = length(ex.args)
+        return Args{n, Nothing}() # TODO keyword arguments
+    end
+
+    return apply_once(check, apply, ex1)
+end
+
 macro xquote(ex)
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
     ex1 = clean_ex(ex)
     ex2 = designate_bound_arguments(ex1)
     # escape everything that isn't a bound variable, so that they are evaluated in the macro call context.
     ex3 = escape_all_but(ex2)
-    uneval(all_typed(ex3))
+    ex4 = normalize_bound_vars(ex3)
+    val = all_typed(ex4)
+    uneval(val)
 end
+
+macro xquote_3(ex)
+    ex1 = clean_ex(ex)
+    ex2 = designate_bound_arguments(ex1)
+    ex3 = escape_all_but(ex2)
+    uneval(ex3)
+end
+
+macro xquote_4(ex)
+    ex1 = clean_ex(ex)
+    ex2 = designate_bound_arguments(ex1)
+    ex3 = escape_all_but(ex2)
+    ex4 = normalize_bound_vars(ex3)
+    uneval(ex4)
+end
+
 end
