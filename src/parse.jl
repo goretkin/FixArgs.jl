@@ -17,26 +17,6 @@ function parse_lambda(ex)
     return nothing
 end
 
-function parse_call(ex)
-    matched = @capture ex f_(args__)
-    matched && return (;f, args)
-    return nothing
-end
-
-make_label(x) = Symbol("_"^x.antecedent_depth, x.arg_i)
-
-function parse_label(s)
-    depth = 0
-    while depth + 1 <= length(s) && s[depth + 1] == '_'
-        depth += 1
-    end
-    depth == 0 && return nothing
-    depth+1 > length(s) && error("all underscore identifier?")
-    arg_i = parse(Int, s[(depth+1):end])
-    return (;depth, arg_i)
-end
-parse_label(s::Symbol) = parse_label(string(s))
-
 function get_label(labeler, labels_stack, sym, referent_depth)
     for (antecedent_depth, labels) = reverse(collect(enumerate(labels_stack)))
         ns = findall(==(sym), labels)
