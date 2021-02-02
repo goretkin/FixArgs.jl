@@ -1,5 +1,7 @@
 module FixArgs
 
+include("TypedExpressions.jl")
+
 using Base: tail
 export Fix, @fix, fix, @FixT
 

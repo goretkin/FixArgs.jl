@@ -100,38 +100,3 @@ Expr
 macro xquote(ex)
     uneval(escape_all_but(ex))
 end
-
-
-using Test: @test, @testset
-expr_tests = [
-    (
-        (let x = 9
-            @xquote sqrt(x)
-        end),
-        :($(sqrt)(9))
-    ),
-    (
-        (let x = 9, sqrt=sin
-            @xquote sqrt(x)
-        end),
-        :($(sin)(9))
-    ),
-    (
-        (let x = 9
-            @xquote Base.sqrt(x)
-        end),
-        :($(sqrt)(9))
-    ),
-    (
-        (let x = 9, sqrt=sin
-            @xquote Base.sqrt(x)
-        end),
-        :($(sqrt)(9))
-    )
-]
-
-@testset begin
-    for t in expr_tests
-        @test isequal(t[1], t[2])
-    end
-end

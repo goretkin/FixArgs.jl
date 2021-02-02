@@ -1,3 +1,4 @@
+include("new_tests.jl")
 using FixArgs
 using FixArgs: Template, ArgPos
 using Test

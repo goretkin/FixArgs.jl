@@ -9,7 +9,7 @@
 
 # In Julia 1.6 there is better printing of type aliases.
 # So I think there should just be a type alias with the name e.g. `Fix` for the common case to be concise.
-# module TypedExpressions
+module TypedExpressions
 
 include("parse.jl")
 include("expr.jl")
@@ -186,25 +186,4 @@ macro xquote1(ex)
     ex3 = escape_all_but(ex2)
     uneval(all_typed(ex3))
 end
-
-# end
-
-macro _test1(ex)
-    quote
-        ($ex, $(esc(ex)))
-    end
-end
-# using .TypedExpressions: EscVal, all_typed, uneval
-_ex_1 = :(x -> ==(x, 0))
-_ex_2 = :(x -> $(==)(x, 0))
-_ex_3 = :(x -> $(==)(x, :zero))
-_ex_4 = :(x -> $(==)(x, $(Val(0))))
-_ex_5 = :(x -> $(==)(x, $(EscVal{Val(0)}())))
-
-# ex = all_typed(_ex_2)
-
-using Test
-if VERSION >= v"1.6-"
-    # test alias printing
-    # @test string(typeof(ex)) == "FixNew{Tuple{Val{:x}}, typeof(==), Tuple{Val{:x}, Int64}}"
 end
