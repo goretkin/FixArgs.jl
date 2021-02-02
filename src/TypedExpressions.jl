@@ -112,7 +112,7 @@ struct Call{F, A}
     args::A
 end
 
-# TODO investigate difference between these two, with respect to returning from a macro:
+# TODO investigate difference between these two, (and in general, all `uneval`s) with respect to returning from a macro:
 uneval(x::Lambda) = :(Lambda($(uneval(x.args)), $(uneval(x.body))))     # implementation 1
 # uneval(x::Lambda) = :($(Lambda)($(uneval(x.args)), $(uneval(x.body)))) # implementation 2
 # in particular, why does implementation 1, when called in a macro, produce a fully-qualified reference to `Lambda`?
@@ -249,11 +249,14 @@ function normalize_bound_vars(ex)
 
     function apply(ex)
         n = length(ex.args)
-        return Args{n, Nothing}() # TODO keyword arguments
+        # TODO choose a representation for keyword arguments
+        NoKeywordArguments = Nothing
+        return Args{n, NoKeywordArguments}()
     end
 
     return apply_once(check, apply, ex1)
 end
+
 
 macro xquote(ex)
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
@@ -263,7 +266,7 @@ macro xquote(ex)
     ex3 = escape_all_but(ex2)
     ex4 = normalize_bound_vars(ex3)
     val = all_typed(ex4)
-    uneval(val)
+    uneval(val) # note: uneval handles `Expr(:escape, ...)` specially.
 end
 
 macro xquote_3(ex)
