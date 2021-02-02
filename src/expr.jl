@@ -97,6 +97,6 @@ Expr
         1: sqrt (function of type typeof(sqrt))
         2: Int64 9
 """
-macro xquote(ex)
+macro quote_some(ex)
     uneval(escape_all_but(ex))
 end

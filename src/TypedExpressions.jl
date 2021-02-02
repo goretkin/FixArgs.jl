@@ -178,7 +178,7 @@ escape_all_symbols(ex) = MacroTools.postwalk(x -> x isa Symbol ? esc(x) : x, ex)
 ArgSymbol_to_Symbol(ex) = MacroTools.postwalk(x -> x isa ArgSymbol ? esc(x._) : x, ex)
 escape_all_Val_symbols(ex) = MacroTools.postwalk(x -> x isa Val ? esc(_get(x)) : x, ex)
 
-macro xquote1(ex)
+macro xquote(ex)
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
     ex1 = clean_ex(ex)
     ex2 = designate_bound_arguments(ex1)

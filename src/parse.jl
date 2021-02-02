@@ -84,9 +84,6 @@ function relabel_args(is_symbol, labeler, ex, labels_stack = [], this_depth = 1)
     return ex   # LineNumberNode, etc.
 end
 
-# spot-check behavior
-@show relabel_args(x -> x isa Symbol, x -> Symbol(string(x)), :(x -> (y -> x + y)))
-
 function findonly(f, v)
     rs = findall(f, v)
     length(rs) == 0 && return nothing
