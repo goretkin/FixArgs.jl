@@ -95,9 +95,11 @@ end
 
 ArgPos(i) = ArgPos{i}()
 
+placeholder_symbol = :_
+
 function arg_pos(i, p)
     p >=0 || error()
-    p == 0 && return BoundSymbol(:_)
+    p == 0 && return BoundSymbol(placeholder_symbol)
     p == 1 && return ArgPos(i)
     ParentScope(arg_pos(i, p - 1))
 end
@@ -272,7 +274,7 @@ function normalize_bound_vars(ex)
     ex)
 
     function check(ex)
-        ex isa Expr && ex.head === :tuple && all(==(BoundSymbol(:_)), ex.args)
+        ex isa Expr && ex.head === :tuple && all(==(BoundSymbol(placeholder_symbol)), ex.args)
     end
 
     function apply(ex)
