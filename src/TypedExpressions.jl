@@ -102,9 +102,8 @@ function arg_pos(i, p)
     ParentScope(arg_pos(i, p - 1))
 end
 struct ParentScope{T}
+    _::T
 end
-
-ParentScope(arg) = ParentScope{arg}()
 
 uneval(x::Arity{P, KW}) where {P, KW} = :(Arity{$(uneval(P)), $(uneval(KW))}())
 uneval(x::ArgPos{N}) where {N} = :(ArgPos($(uneval(N))))
@@ -295,6 +294,52 @@ macro xquote(ex)
     ex4 = normalize_bound_vars(ex3)
     val = all_typed(ex4)
     uneval(val) # note: uneval handles `Expr(:escape, ...)` specially.
+end
+
+struct Context{E, P}
+    this::E
+    parent::P
+end
+
+# TODO clean up base case to have just one of these two
+xeval(a::ArgPos{i}, ctx::Context{Nothing, P}) where {i, P} = a
+xeval(a::ArgPos{i}, ctx::Nothing) where {i} = a
+
+# also just one of these two. Also TODO: define only on `Some`
+xeval(a, ctx::Context) = a
+xeval(a, ctx::Nothing) = a
+
+# TODO:
+#xeval(a::Val{T}, ctx::Union{Nothing, <:Context}) = T
+
+xeval(a::ArgPos{i}, ctx::Context{T, P}) where {i, T, P} = ctx.this[i]
+xeval(a::ParentScope{A}, ctx::Context) where {A} = xeval(a._, ctx.parent)
+
+
+function xeval(c::Lambda, ctx::Context)
+    Lambda(
+        c.args,
+        xeval(c.body, Context(nothing, ctx))
+    )
+end
+
+_xeval_call_args(c::Call, ctx::Context) = map(x -> xeval(x, ctx), c.args)
+
+function xeval(c::Call, ctx::Context)
+    args_eval = _xeval_call_args(c, ctx)
+    c.f(args_eval...)
+end
+
+function check_arity(f::Lambda{Arity{P, NoKeywordArguments}, B}, args) where {P, B}
+    (P == length(args)) && return
+    error("lambda of arity $P cannot apply to $(length(args)) arguments")
+end
+
+_ctx_this(args_formal, args_actual) = args_actual
+
+function xapply(f::Lambda, args, ctx_parent=nothing)
+    check_arity(f, args)
+    xeval(f.body, Context(_ctx_this(f.args, args), ctx_parent))
 end
 
 end

@@ -68,6 +68,12 @@ end
     @test (let one = 1, eq = ==; @xquote x -> eq(x, one) end) == FixArgs.TypedExpressions.Fix2(==, 1)
 end
 
+@testset "compute" begin
+    L = @xquote x -> ==(x, 1)
+    @test true == FixArgs.TypedExpressions.xapply(L, 1)
+    @test false == FixArgs.TypedExpressions.xapply(L, 2)
+end
+
 macro _test1(ex)
     quote
         ($ex, $(esc(ex)))
