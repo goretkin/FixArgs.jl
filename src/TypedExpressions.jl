@@ -34,7 +34,7 @@ struct TypedExpr{H, A}
     args::A
 end
 
-function typed_expr(expr::Expr)
+function TypedExpr(expr::Expr)
     TypedExpr(
         typed_expr(expr.head),
         typed_expr(expr.args)
@@ -43,6 +43,7 @@ end
 
 typed_expr(args::Vector) = tuple(map(typed_expr, args)...)
 typed_expr(sym::Symbol) = Val(sym)
+typed_expr(expr::Expr) = TypedExpr(expr)
 typed_expr(x) = x
 
 function inv_typed_expr(expr::TypedExpr)
@@ -200,7 +201,7 @@ clean_ex(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
 all_typed(ex) = begin
     #println("all_typed")
     #dump(ex)
-    _typed1(typed_expr(clean_ex(ex)))
+    _typed1(TypedExpr(clean_ex(ex)))
 end
 
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
