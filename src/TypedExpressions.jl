@@ -19,26 +19,33 @@ include("parse.jl")
 include("expr.jl")
 include("show.jl")
 
+"""
+Note that `Expr` and `TypedExpr` are constructed slightly differently.
+Each argument of an `Expr` is an argument to `Expr`, whereas
+all arguments of a `TypedExpr` are passed as one argument (a tuple) to `TypedExpr`
+
+e.g.
+
+`Expr(:call, +, 1, 2)` corresponds to
+`TypedExpr(Val{:call}(), (+, 1, 2))`
+"""
 struct TypedExpr{H, A}
     head::H
     args::A
 end
 
-# TODO define something like the following to mirror `Expr`
-# TypedExpr(head, args...) = TypedExpr(head, args)
-
-function _typed(expr::Expr)
+function typed_expr(expr::Expr)
     expr.head === :escape && return expr
     TypedExpr(
-        _typed(expr.head),
-        _typed(expr.args)
+        typed_expr(expr.head),
+        typed_expr(expr.args)
     )
 end
 
-_typed(args::Vector) = tuple(map(_typed, args)...)
-_typed(sym::Symbol) = Val(sym)
-_typed(x::BoundSymbol) = x
-_typed(x) = x
+typed_expr(args::Vector) = tuple(map(typed_expr, args)...)
+typed_expr(sym::Symbol) = Val(sym)
+typed_expr(x::BoundSymbol) = x
+typed_expr(x) = x
 
 function uneval(x::TypedExpr)
     # the `TypedExpr` below is assumed to be available in the scope
@@ -187,7 +194,7 @@ clean_ex(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
 all_typed(ex) = begin
     #println("all_typed")
     #dump(ex)
-    _typed1(_typed(clean_ex(ex)))
+    _typed1(typed_expr(clean_ex(ex)))
 end
 
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
