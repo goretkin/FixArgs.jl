@@ -175,8 +175,6 @@ lc_expr(expr::TypedExpr{Val{:call}, X}) where {X} = Call(lc_expr(expr.args[1]), 
 lc_expr(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(lc_expr, expr.args)
 lc_expr(expr::TypedExpr{Val{:escape}, X}) where {X} = inv_typed_expr(expr)
 
-lc_expr(x::BoundSymbol) = x
-
 """
 Lambda-Call expression
 """
