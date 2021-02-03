@@ -180,19 +180,6 @@ Lambda-Call expression
 """
 lc_expr(x) = x
 
-
-
-# other order doesn't work. I suppose `striplines` introduces blocks
-clean_expr(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
-
-
-
-all_typed(ex) = begin
-    #println("all_typed")
-    #dump(ex)
-    lc_expr(TypedExpr(ex))
-end
-
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
 
 # define constructor consistent with type alias
@@ -279,7 +266,7 @@ macro xquote(ex)
     # `BoundSymbol{::Symbol}` comes to represent bound variables in the λ calculus
     ex3 = escape_all_but(ex2)
     ex4 = normalize_bound_vars(ex3)
-    val = all_typed(ex4)
+    val = lc_expr(TypedExpr(ex4))
     uneval(val) # note: uneval handles `Expr(:escape, ...)` specially.
 end
 
