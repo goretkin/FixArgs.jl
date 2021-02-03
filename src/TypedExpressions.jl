@@ -35,34 +35,10 @@ function _typed(expr::Expr)
     )
 end
 
-"""
-`Val{::Symbol}` comes to represent free variables in the λ calculus
-`BoundVal{::Symbol}` comes to represent bound variables in the λ calculus
-"""
-struct BoundVal{T}
-end
-struct EscVal{T}
-end
-
 _typed(args::Vector) = tuple(map(_typed, args)...)
 _typed(sym::Symbol) = Val(sym)
 _typed(x::BoundSymbol) = x
 _typed(x) = x
-
-#=
-# pass on anything that is already evaluated
-_typed(x) = x
-
-# if it was an evaluated `Val`, etc., then escape it to distinguish it from having originated with a ::Symbol
-_typed(x::Val) = EscVal{typeof(x)}()
-_typed(x::BoundVal) = EscVal{typeof(x)}()
-_typed(x::EscVal) = EscVal{typeof(x)}()
-
-# because Symbol is already wrapped above, we can unquote `QuoteNode` of `Symbol`.
-# e.g. ``:(:x)`` to ``:x`
-# TODO perhaps not just `Symbol`?
-_typed(x::QuoteNode) = x.value isa Symbol ? x.value : x
-=#
 
 function uneval(x::TypedExpr)
     # the `TypedExpr` below is assumed to be available in the scope
@@ -177,15 +153,6 @@ uneval(x::Call) = :(Call($(uneval(x.f)), $(uneval(x.args))))
 Base.show(io::IO, x::Lambda) = Show._show_without_type_parameters(io, x)
 Base.show(io::IO, x::Call) = Show._show_without_type_parameters(io, x)
 
-#=
-# Try to represent an unordered collection as a type, to represent keyword arguments.
-_Union() = Union{}
-_Union(x) = Union{x}
-_Union(a, b) = Union{a, b}
-_Union(x...) = reduce(_Union, x)
-
-KeywordArgType(kwarg_names...) = _Union(sort(collect(kwarg_names))...)
-=#
 _typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(_typed1(expr.args[1]), _typed1(expr.args[2]))
 _typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(_typed1(expr.args[1]), map(_typed1, expr.args[2:end])) # TODO handle TypedExpr with kwargs
 _typed1(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(_typed1, expr.args)
@@ -196,8 +163,6 @@ end
 
 _typed1(x::BoundSymbol) = x
 _typed1(x) = x
-
-# _typed1(x) = x
 
 using MacroTools: MacroTools, striplines, flatten
 
@@ -302,10 +267,13 @@ end
 macro xquote(ex)
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
     # otherwise cannot distinguish between original `BoundSymbol` and output of `designate_bound_arguments`
-    # Then theese escaped `BoundSymbol`s should not be touched by `normalize_bound_vars`
+    # Then these escaped `BoundSymbol`s should not be touched by `normalize_bound_vars`
     ex1 = clean_ex(ex)
     ex2 = designate_bound_arguments(ex1)
+
     # escape everything that isn't a bound variable, so that they are evaluated in the macro call context.
+    # unquoted `Symbol` comes to represent free variables in the λ calculus (as does e.g. `:(Base.sqrt)`, see `do_escape`)
+    # `BoundSymbol{::Symbol}` comes to represent bound variables in the λ calculus
     ex3 = escape_all_but(ex2)
     ex4 = normalize_bound_vars(ex3)
     val = all_typed(ex4)
