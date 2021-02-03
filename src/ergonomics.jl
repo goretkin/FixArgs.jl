@@ -1,3 +1,24 @@
+const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
+
+# define constructor consistent with type alias
+function FixNew(args_in, f, args_call)
+    Lambda(args_in, Call(f, args_call))
+end
+
+# TODO will be `Some{T}`, not `T`, on the rhs
+const Fix1{F, T} = FixNew{typeof(Arity(1)), F, Tuple{T, typeof(ArgPos(1))}}
+const Fix2{F, T} = FixNew{typeof(Arity(1)), F, Tuple{typeof(ArgPos(1)), T}}
+
+# define constructor consistent with type alias
+function Fix1(f, x)
+    FixNew(Arity(1), f, (x, ArgPos(1)))
+end
+
+function Fix2(f, x)
+    FixNew(Arity(1), f, (ArgPos(1), x))
+end
+
+
 function Base.show(io::IO, a::Union{ParentScope, ArgPos{i} where i})
     (_a, p) = unwrap_ParentScope(a)
     _show_arg_pos(io, _get(_a), p)

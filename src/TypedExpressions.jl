@@ -57,28 +57,6 @@ Lambda-Call expression
 """
 lc_expr(x) = x
 
-const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
-
-# define constructor consistent with type alias
-function FixNew(args_in, f, args_call)
-    Lambda(args_in, Call(f, args_call))
-end
-
-# TODO will be `Some{T}`, not `T`, on the rhs
-const Fix1{F, T} = FixNew{typeof(Arity(1)), F, Tuple{T, typeof(ArgPos(1))}}
-const Fix2{F, T} = FixNew{typeof(Arity(1)), F, Tuple{typeof(ArgPos(1)), T}}
-
-# define constructor consistent with type alias
-function Fix1(f, x)
-    FixNew(Arity(1), f, (x, ArgPos(1)))
-end
-
-function Fix2(f, x)
-    FixNew(Arity(1), f, (ArgPos(1), x))
-end
-
-
-
 _get(::Val{x}) where {x} = x
 
 designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
