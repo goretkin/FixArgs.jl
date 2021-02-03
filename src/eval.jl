@@ -7,6 +7,8 @@ struct Context{E, P}
     parent::P
 end
 
+# TODO: other evaluation schemes to take e.g. `@xquote () -> 1 + 2` to `@xquote () -> 3`
+
 # TODO clean up base case to have just one of these two
 xeval(a::ArgPos{i}, ctx::Context{Nothing, P}) where {i, P} = a
 xeval(a::ArgPos{i}, ctx::Nothing) where {i} = a
