@@ -105,6 +105,20 @@ end
     end
 end
 
+@testset "printing" begin
+    Xfoo = @xquote x -> (y -> getindex(map(string, UnitRange(1, x)), y))
+    Xbar = @xquote z -> Xfoo(z)(z)
+    L = @xquote x -> ( y -> ==(x, y) )
+    Lxyz = @xquote x -> y -> z -> (x * y * z)
+
+    # for now, just check this doesn't generate errors.
+    println(stdout, Xfoo)
+    println(stdout, Xbar)
+    println(stdout, L)
+    println(stdout, Lxyz)
+    @test true
+end
+
 macro _test1(ex)
     quote
         ($ex, $(esc(ex)))

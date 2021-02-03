@@ -22,4 +22,5 @@ include("types.jl")
 include("eval.jl")
 include("TypedExpressions.jl")
 include("uneval.jl")
+include("ergonomics.jl")
 end
