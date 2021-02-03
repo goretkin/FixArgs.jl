@@ -109,7 +109,7 @@ end
 
 uneval(x::Arity{P, KW}) where {P, KW} = :(Arity{$(uneval(P)), $(uneval(KW))}())
 uneval(x::ArgPos{N}) where {N} = :(ArgPos($(uneval(N))))
-uneval(x::ParentScope{T}) where {T} = :(ParentScope($(uneval(T))))
+uneval(x::ParentScope) = :(ParentScope($(uneval(x._))))
 
 struct Lambda{A, B}
     args::A
@@ -325,11 +325,24 @@ function xeval(c::Lambda, ctx::Context)
     )
 end
 
-_xeval_call_args(c::Call, ctx::Context) = map(x -> xeval(x, ctx), c.args)
+_xeval_call_args(c::Call, ctx::Context) = map(x -> xeval(x, ctx), c.args)           # TODO kwargs
 
 function xeval(c::Call, ctx::Context)
     args_eval = _xeval_call_args(c, ctx)
-    c.f(args_eval...)
+    c.f(args_eval...)    # TODO kwargs
+end
+
+xeval_esc(x, ctx) = x
+xeval_esc(x::ParentScope, ctx) = xeval(x, ctx)
+_xeval_call_args_esc(c::Call, ctx::Context) = map(x -> xeval_esc(x, ctx), c.args)   # TODO kwargs
+
+function xeval(c::Call, ctx::Context{Nothing, P}) where P
+    # this was invoked by `xeval(::Lambda, ...)`
+    # which means we are not going to call `c.f`
+    Call(
+        xeval_esc(c.f, ctx),
+        _xeval_call_args_esc(c, ctx)
+    )
 end
 
 function check_arity(f::Lambda{Arity{P, NoKeywordArguments}, B}, args) where {P, B}

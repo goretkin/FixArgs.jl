@@ -74,6 +74,10 @@ end
     @test false == FixArgs.TypedExpressions.xapply(L, 2)
 end
 
+@testset "compute nested lambda" begin
+    L = @xquote x -> ( y -> ==(x, y) )
+    @test FixArgs.TypedExpressions.xapply(L, 2) == FixArgs.TypedExpressions.Fix1(==, 2)
+end
 macro _test1(ex)
     quote
         ($ex, $(esc(ex)))
