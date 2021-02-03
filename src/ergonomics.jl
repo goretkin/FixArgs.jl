@@ -15,8 +15,8 @@ function Fix2(f, x)
     FixNew(Arity(1), f, (ArgPos(1), x))
 end
 
-
 function Base.show(io::IO, a::Union{ParentScope, ArgPos{i} where i})
+    _get(::ArgPos{i}) where {i} = i
     (_a, p) = unwrap_ParentScope(a)
     _show_arg_pos(io, _get(_a), p)
 end

@@ -43,8 +43,6 @@ end
 unwrap_ParentScope(x::ArgPos, p=0) = (x, p)
 unwrap_ParentScope(x::ParentScope, p=0) = unwrap_ParentScope(x._, p + 1)
 
-_get(::ArgPos{i}) where {i} = i
-
 lc_expr(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(lc_expr(expr.args[1]), lc_expr(expr.args[2]))
 lc_expr(expr::TypedExpr{Val{:call}, X}) where {X} = Call(lc_expr(expr.args[1]), map(lc_expr, expr.args[2:end])) # TODO handle TypedExpr with kwargs
 lc_expr(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(lc_expr, expr.args)
@@ -54,8 +52,6 @@ lc_expr(expr::TypedExpr{Val{:escape}, X}) where {X} = inv_typed_expr(expr)
 Lambda-Call expression
 """
 lc_expr(x) = x
-
-_get(::Val{x}) where {x} = x
 
 designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
 
