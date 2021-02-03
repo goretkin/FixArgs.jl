@@ -183,7 +183,7 @@ lc_expr(x) = x
 
 
 # other order doesn't work. I suppose `striplines` introduces blocks
-clean_ex(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
+clean_expr(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
 
 
 
@@ -271,7 +271,7 @@ macro xquote(ex)
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
     # otherwise cannot distinguish between original `BoundSymbol` and output of `designate_bound_arguments`
     # Then these escaped `BoundSymbol`s should not be touched by `normalize_bound_vars`
-    ex1 = clean_ex(ex)
+    ex1 = clean_expr(ex)
     ex2 = designate_bound_arguments(ex1)
 
     # escape everything that isn't a bound variable, so that they are evaluated in the macro call context.

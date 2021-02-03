@@ -14,6 +14,9 @@ end
 """normalize `:(x -> body)` into  `:((x,) -> body`)"""
 normalize_lambda_1_arg(ex) = MacroTools.prewalk(_normalize_lambda_1_arg, ex)
 
+# other order doesn't work. I suppose `striplines` introduces blocks
+clean_expr(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
+
 struct BoundSymbol
     _::Symbol
 end
