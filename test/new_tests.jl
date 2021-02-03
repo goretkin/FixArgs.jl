@@ -1,5 +1,5 @@
 using FixArgs: FixArgs
-using FixArgs.TypedExpressions: @quote_some, @xquote, relabel_args
+using FixArgs.New: @quote_some, @xquote, relabel_args
 using Test: @test, @testset
 using MacroTools: @capture
 
@@ -59,24 +59,24 @@ expr_tests = [
 end
 
 @testset "@xquote and Fix1, Fix2" begin
-    @test (@xquote x -> ==(1, x)) == FixArgs.TypedExpressions.Fix1(==, 1)
-    @test (@xquote x -> ==(x, 1)) == FixArgs.TypedExpressions.Fix2(==, 1)
-    @test (@xquote x -> x == 1) == FixArgs.TypedExpressions.Fix2(==, 1)
-    @test (@xquote (x,) -> ==(x, 1)) == FixArgs.TypedExpressions.Fix2(==, 1)
-    @test (@xquote xyz -> ==(xyz, 1)) == FixArgs.TypedExpressions.Fix2(==, 1)
-    @test (let one = 1; @xquote x -> ==(x, one) end) == FixArgs.TypedExpressions.Fix2(==, 1)
-    @test (let one = 1, eq = ==; @xquote x -> eq(x, one) end) == FixArgs.TypedExpressions.Fix2(==, 1)
+    @test (@xquote x -> ==(1, x)) == FixArgs.New.Fix1(==, 1)
+    @test (@xquote x -> ==(x, 1)) == FixArgs.New.Fix2(==, 1)
+    @test (@xquote x -> x == 1) == FixArgs.New.Fix2(==, 1)
+    @test (@xquote (x,) -> ==(x, 1)) == FixArgs.New.Fix2(==, 1)
+    @test (@xquote xyz -> ==(xyz, 1)) == FixArgs.New.Fix2(==, 1)
+    @test (let one = 1; @xquote x -> ==(x, one) end) == FixArgs.New.Fix2(==, 1)
+    @test (let one = 1, eq = ==; @xquote x -> eq(x, one) end) == FixArgs.New.Fix2(==, 1)
 end
 
 @testset "compute" begin
     L = @xquote x -> ==(x, 1)
-    @test true == FixArgs.TypedExpressions.xapply(L, 1)
-    @test false == FixArgs.TypedExpressions.xapply(L, 2)
+    @test true == FixArgs.New.xapply(L, 1)
+    @test false == FixArgs.New.xapply(L, 2)
 end
 
 @testset "compute nested Lambda" begin
     L = @xquote x -> ( y -> ==(x, y) )
-    @test FixArgs.TypedExpressions.xapply(L, 2) == FixArgs.TypedExpressions.Fix1(==, 2)
+    @test FixArgs.New.xapply(L, 2) == FixArgs.New.Fix1(==, 2)
 
     Lxyz = @xquote x -> y -> z -> (x * y * z)
     @test Lxyz("a")("b")("c") == "abc"
@@ -110,7 +110,7 @@ macro _test1(ex)
         ($ex, $(esc(ex)))
     end
 end
-# using .TypedExpressions: EscVal, all_typed, uneval
+# using .New: EscVal, all_typed, uneval
 #=
 _ex_1 = :(x -> ==(x, 0))
 _ex_2 = :(x -> $(==)(x, 0))

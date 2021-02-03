@@ -1,7 +1,7 @@
 module FixArgs
 
 include("TypedExpressions.jl")
-using .TypedExpressions
+using .New
 export Fix1, Fix2
 
 using Base: tail

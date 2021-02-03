@@ -9,7 +9,7 @@
 
 # In Julia 1.6 there is better printing of type aliases.
 # So I think there should just be a type alias with the name e.g. `Fix` for the common case to be concise.
-module TypedExpressions
+module New
 
 # export so that Julia v1.6 type alias printing works
 # but not FixNew to not inhibit other type aliases: https://github.com/JuliaLang/julia/issues/39492
@@ -102,18 +102,18 @@ uneval(x::Lambda) = :(Lambda($(uneval(x.args)), $(uneval(x.body))))     # implem
 # and what happens if `Lambda` is not available in the scope of the macro definition?
 
 #= implementation 1
-julia> dump(@macroexpand FixArgs.TypedExpressions.@xquote (x, y) -> x + y)
+julia> dump(@macroexpand FixArgs.New.@xquote (x, y) -> x + y)
 Expr
   head: Symbol call
   args: Array{Any}((3,))
     1: GlobalRef
-      mod: Module FixArgs.TypedExpressions
+      mod: Module FixArgs.New
       name: Symbol Lambda
 [...]
 =#
 
 #= implementation 2
-julia> dump(@macroexpand FixArgs.TypedExpressions.@xquote (x, y) -> x + y)
+julia> dump(@macroexpand FixArgs.New.@xquote (x, y) -> x + y)
 Expr
   head: Symbol call
   args: Array{Any}((3,))
