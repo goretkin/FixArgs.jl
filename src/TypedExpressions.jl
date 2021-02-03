@@ -35,7 +35,6 @@ struct TypedExpr{H, A}
 end
 
 function typed_expr(expr::Expr)
-    expr.head === :escape && return expr
     TypedExpr(
         typed_expr(expr.head),
         typed_expr(expr.args)
@@ -45,6 +44,17 @@ end
 typed_expr(args::Vector) = tuple(map(typed_expr, args)...)
 typed_expr(sym::Symbol) = Val(sym)
 typed_expr(x) = x
+
+function inv_typed_expr(expr::TypedExpr)
+    Expr(
+        inv_typed_expr(expr.head),
+        inv_typed_expr(expr.args)...
+    )
+end
+
+inv_typed_expr(args::Tuple) = map(inv_typed_expr, [args...])
+inv_typed_expr(val::Val{sym}) where sym = sym
+inv_typed_expr(x) = x
 
 function uneval(x::TypedExpr)
     # the `TypedExpr` below is assumed to be available in the scope
@@ -162,10 +172,7 @@ Base.show(io::IO, x::Call) = Show._show_without_type_parameters(io, x)
 _typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(_typed1(expr.args[1]), _typed1(expr.args[2]))
 _typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(_typed1(expr.args[1]), map(_typed1, expr.args[2:end])) # TODO handle TypedExpr with kwargs
 _typed1(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(_typed1, expr.args)
-function _typed1(expr::Expr)
-    expr.head === :escape && return expr
-    error("_typed1(::Expr) unexpected head: $(expr)")
-end
+_typed1(expr::TypedExpr{Val{:escape}, X}) where {X} = inv_typed_expr(expr)
 
 _typed1(x::BoundSymbol) = x
 _typed1(x) = x
