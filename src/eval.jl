@@ -1,3 +1,7 @@
+"""
+terms are evaluated with respect to a `Context`
+A `Context` is an associations between bound variables and values, and they may be nested (`parent`).
+"""
 struct Context{E, P}
     this::E
     parent::P
@@ -62,6 +66,9 @@ function check_arity(f::Lambda{Arity{P, NoKeywordArguments}, B}, args) where {P,
     error("lambda of arity $P cannot apply to $(length(args)) arguments")
 end
 
+# for now, `Context` is all positional.
+# but this could be extended so that `xeval` may work more generally
+# e.g. with default arguments
 _ctx_this(args_formal, args_actual) = args_actual
 
 function xapply(f::Lambda, args, ctx_parent=nothing)
