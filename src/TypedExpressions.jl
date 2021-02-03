@@ -345,7 +345,7 @@ xeval_esc(x::Call, ctx) = xeval(x, ctx)
 _xeval_call_args_esc(c::Call, ctx::Context) = map(x -> xeval_esc(x, ctx), c.args)   # TODO kwargs
 
 function xeval(c::Call, ctx::Context{Nothing, P}) where P
-    println("xeval(::Call, ::Context{Nothing, ...}) : $(c)")
+    # println("xeval(::Call, ::Context{Nothing, ...}) : $(c)")
     # this was invoked by `xeval(::Lambda, ...)`
     # which means we are not going to call `c.f`
     Call(
