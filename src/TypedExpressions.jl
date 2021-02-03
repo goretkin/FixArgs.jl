@@ -190,7 +190,7 @@ clean_ex(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
 all_typed(ex) = begin
     #println("all_typed")
     #dump(ex)
-    lc_expr(TypedExpr(clean_ex(ex)))
+    lc_expr(TypedExpr(ex))
 end
 
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
