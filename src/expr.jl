@@ -27,30 +27,6 @@ function prewalk(f, x, state)
     walk(x′, x -> prewalk(f, x, state′), identity)
 end
 
-
-"""
-e.g.
-
-```julia
-julia> eval(uneval(Expr(:my_call, :arg1, :arg2)))
-:($(Expr(:my_call, :arg1, :arg2)))
-
-julia> eval(eval(uneval(:(sqrt(9)))))
-3.0
-```
-
-Note the special case for `:(esc(x))`.
-"""
-function uneval(x::Expr)
-    x.head === :escape && return x
-    # the `Expr` below is assumed to be available in the scope and to be `Base.Expr`
-    :(Expr($(uneval(x.head)), $(map(uneval, x.args)...)))
-end
-
-# tangential TODO: determine which one
-uneval(x) = Meta.quot(x)
-# uneval(x) = Meta.QuoteNode(x)
-
 function do_escape(s::Symbol)
     return true
 end

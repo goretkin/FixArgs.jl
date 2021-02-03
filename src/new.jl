@@ -21,4 +21,5 @@ include("show.jl")
 include("types.jl")
 include("eval.jl")
 include("TypedExpressions.jl")
+include("uneval.jl")
 end

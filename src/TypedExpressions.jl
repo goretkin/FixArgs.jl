@@ -36,24 +36,6 @@ inv_typed_expr(args::Tuple) = map(inv_typed_expr, [args...])
 inv_typed_expr(val::Val{sym}) where sym = sym
 inv_typed_expr(x) = x
 
-function uneval(x::TypedExpr)
-    # the `TypedExpr` below is assumed to be available in the scope
-    :(TypedExpr(
-        $(uneval(x.head)),
-        $(uneval(x.args))
-    ))
-end
-
-function uneval(x::Val{T}) where T
-    # assumed to be available in the scope
-    :(Val($(uneval(T))))
-end
-
-function uneval(x::Tuple)
-    Expr(:tuple, map(uneval, x)...)
-    # :($(map(uneval, x)...))
-end
-
 function _show_arg_pos(io::IO, i, p)
     print(io, "arg_pos($i, $p)")
 end
@@ -67,49 +49,6 @@ function Base.show(io::IO, a::Union{ParentScope, ArgPos{i} where i})
     (_a, p) = unwrap_ParentScope(a)
     _show_arg_pos(io, _get(_a), p)
 end
-
-uneval(x::Arity{P, KW}) where {P, KW} = :(Arity{$(uneval(P)), $(uneval(KW))}())
-uneval(x::ArgPos{N}) where {N} = :(ArgPos($(uneval(N))))
-uneval(x::ParentScope) = :(ParentScope($(uneval(x._))))
-
-# TODO investigate difference between these two, (and in general, all `uneval`s) with respect to returning from a macro:
-uneval(x::Lambda) = :(Lambda($(uneval(x.args)), $(uneval(x.body))))     # implementation 1
-# uneval(x::Lambda) = :($(Lambda)($(uneval(x.args)), $(uneval(x.body)))) # implementation 2
-# in particular, why does implementation 1, when called in a macro, produce a fully-qualified reference to `Lambda`?
-# and what happens if `Lambda` is not available in the scope of the macro definition?
-
-#= implementation 1
-julia> dump(@macroexpand FixArgs.New.@xquote (x, y) -> x + y)
-Expr
-  head: Symbol call
-  args: Array{Any}((3,))
-    1: GlobalRef
-      mod: Module FixArgs.New
-      name: Symbol Lambda
-[...]
-=#
-
-#= implementation 2
-julia> dump(@macroexpand FixArgs.New.@xquote (x, y) -> x + y)
-Expr
-  head: Symbol call
-  args: Array{Any}((3,))
-    1: UnionAll
-      var: TypeVar
-        name: Symbol A
-        lb: Union{}
-        ub: Any
-      body: UnionAll
-        var: TypeVar
-          name: Symbol B
-          lb: Union{}
-          ub: Any
-        body: Lambda{A, B} <: Any
-          args::A
-          body::B
-[...]
-=#
-uneval(x::Call) = :(Call($(uneval(x.f)), $(uneval(x.args))))
 
 Base.show(io::IO, x::Lambda) = Show._show_without_type_parameters(io, x)
 Base.show(io::IO, x::Call) = Show._show_without_type_parameters(io, x)
