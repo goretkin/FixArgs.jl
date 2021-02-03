@@ -23,6 +23,12 @@ end
 #=
 `show` methods
 =#
+function _show_arg_pos(io::IO, i, p)
+    print(io, "arg_pos($i, $p)")
+end
+
+unwrap_ParentScope(x::ArgPos, p=0) = (x, p)
+unwrap_ParentScope(x::ParentScope, p=0) = unwrap_ParentScope(x._, p + 1)
 
 function Base.show(io::IO, a::Union{ParentScope, ArgPos{i} where i})
     _get(::ArgPos{i}) where {i} = i
