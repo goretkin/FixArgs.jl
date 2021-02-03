@@ -47,7 +47,7 @@ function do_escape(e::BoundSymbol)
     return false
 end
 
-do_escape(e) = false # all else
+do_escape(e) = true # all else
 
 function _apply_once(check, apply)
     function walk_f(x, s)
