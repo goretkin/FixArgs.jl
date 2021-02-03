@@ -44,7 +44,6 @@ end
 
 typed_expr(args::Vector) = tuple(map(typed_expr, args)...)
 typed_expr(sym::Symbol) = Val(sym)
-typed_expr(x::BoundSymbol) = x
 typed_expr(x) = x
 
 function uneval(x::TypedExpr)
