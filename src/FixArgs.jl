@@ -1,6 +1,6 @@
 module FixArgs
 
-include("TypedExpressions.jl")
+include("new.jl")
 using .New
 export Fix1, Fix2
 
