@@ -170,13 +170,17 @@ uneval(x::Call) = :(Call($(uneval(x.f)), $(uneval(x.args))))
 Base.show(io::IO, x::Lambda) = Show._show_without_type_parameters(io, x)
 Base.show(io::IO, x::Call) = Show._show_without_type_parameters(io, x)
 
-_typed1(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(_typed1(expr.args[1]), _typed1(expr.args[2]))
-_typed1(expr::TypedExpr{Val{:call}, X}) where {X} = Call(_typed1(expr.args[1]), map(_typed1, expr.args[2:end])) # TODO handle TypedExpr with kwargs
-_typed1(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(_typed1, expr.args)
-_typed1(expr::TypedExpr{Val{:escape}, X}) where {X} = inv_typed_expr(expr)
+lc_expr(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(lc_expr(expr.args[1]), lc_expr(expr.args[2]))
+lc_expr(expr::TypedExpr{Val{:call}, X}) where {X} = Call(lc_expr(expr.args[1]), map(lc_expr, expr.args[2:end])) # TODO handle TypedExpr with kwargs
+lc_expr(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(lc_expr, expr.args)
+lc_expr(expr::TypedExpr{Val{:escape}, X}) where {X} = inv_typed_expr(expr)
 
-_typed1(x::BoundSymbol) = x
-_typed1(x) = x
+lc_expr(x::BoundSymbol) = x
+
+"""
+Lambda-Call expression
+"""
+lc_expr(x) = x
 
 using MacroTools: MacroTools, striplines, flatten
 
@@ -201,7 +205,7 @@ clean_ex(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
 all_typed(ex) = begin
     #println("all_typed")
     #dump(ex)
-    _typed1(TypedExpr(clean_ex(ex)))
+    lc_expr(TypedExpr(clean_ex(ex)))
 end
 
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
