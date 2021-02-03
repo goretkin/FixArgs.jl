@@ -9,14 +9,14 @@ function FixNew(args_in, f, args_call)
 end
 
 # TODO will be `Some{T}`, not `T`, on the rhs
-const Fix1{F, T} = FixNew{typeof(Arity(1)), F, Tuple{T, typeof(ArgPos(1))}}
-const Fix2{F, T} = FixNew{typeof(Arity(1)), F, Tuple{typeof(ArgPos(1)), T}}
+const Fix1{F, T} = FixNew{typeof(Arity(1)), Some{F}, Tuple{Some{T}, typeof(ArgPos(1))}}
+const Fix2{F, T} = FixNew{typeof(Arity(1)), Some{F}, Tuple{typeof(ArgPos(1)), Some{T}}}
 # define constructor consistent with type alias
 function Fix1(f, x)
-    FixNew(Arity(1), f, (x, ArgPos(1)))
+    FixNew(Arity(1), Some(f), (Some(x), ArgPos(1)))
 end
 function Fix2(f, x)
-    FixNew(Arity(1), f, (ArgPos(1), x))
+    FixNew(Arity(1), Some(f), (ArgPos(1), Some(x)))
 end
 
 
@@ -56,18 +56,18 @@ end
 function Base.show(io::IO, x::Fix1)
     print(io, "Fix1")
     print(io, "(")
-    show(io, x.body.f)
+    show(io, something(x.body.f))
     print(io, ",")
-    show(io, x.body.args[1])
+    show(io, something(x.body.args[1]))
     print(io, ")")
 end
 
 function Base.show(io::IO, x::Fix2)
     print(io, "Fix2")
     print(io, "(")
-    show(io, x.body.f)
+    show(io, something(x.body.f))
     print(io, ",")
-    show(io, x.body.args[2])
+    show(io, something(x.body.args[2]))
     print(io, ")")
 end
 
@@ -75,7 +75,25 @@ end
 #=
 macros
 =#
-escape_all_but(ex) = apply_once(do_escape, esc, ex)
+
+# to enable static data (data baked into the type)
+# in macro invocation wrap everything that will be evaluated at macro usage scope
+SomeUnlessNot(x) = Some(x)
+
+# exceptions
+SomeUnlessNot(x::Val) = x
+
+# `Some` is used to escape the exceptions, do not wrap again
+SomeUnlessNot(x::Some{<:Val}) = x
+
+function static_escape(ex)
+    @show ex
+    Expr(:call, SomeUnlessNot, ex)
+end
+
+# `escape_all_but_old` is supporting some unit tests.
+escape_all_but_old(ex) = apply_once(do_escape, esc, ex)
+escape_all_but(ex) = apply_once(do_escape, x -> esc(static_escape(x)), ex)
 
 """
 e.g.
@@ -89,7 +107,7 @@ Expr
         2: Int64 9
 """
 macro quote_some(ex)
-    uneval(escape_all_but(ex))
+    uneval(escape_all_but_old(ex))
 end
 
 macro xquote(ex)
