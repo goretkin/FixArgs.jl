@@ -61,7 +61,6 @@ function _apply_once(check, apply)
 end
 
 apply_once(check, apply, ex) = prewalk(_apply_once(check, apply), ex, :init)
-escape_all_but(ex) = apply_once(do_escape, esc, ex)
 
 designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
 

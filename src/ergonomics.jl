@@ -75,6 +75,7 @@ end
 #=
 macros
 =#
+escape_all_but(ex) = apply_once(do_escape, esc, ex)
 
 """
 e.g.
