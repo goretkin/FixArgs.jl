@@ -180,20 +180,7 @@ Lambda-Call expression
 """
 lc_expr(x) = x
 
-using MacroTools: MacroTools, striplines, flatten
 
-is_lambda_1_arg(ex::Expr) = (ex.head == :->) && (ex.args[1] isa Symbol) # TODO or check that it's not a ex::Expr with `ex.head === :tuple`
-is_lambda_1_arg(x) = false
-
-function _normalize_lambda_1_arg(ex)
-    is_lambda_1_arg(ex) || return ex
-    arg = ex.args[1]
-    body = ex.args[2]
-    return :(($(arg), ) -> $(body))
-end
-
-"""normalize `:(x -> body)` into  `:((x,) -> body`)"""
-normalize_lambda_1_arg(ex) = MacroTools.prewalk(_normalize_lambda_1_arg, ex)
 
 # other order doesn't work. I suppose `striplines` introduces blocks
 clean_ex(ex) = flatten(striplines(normalize_lambda_1_arg(ex)))
