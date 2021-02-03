@@ -88,11 +88,8 @@ end
 
 ArgPos(i) = ArgPos{i}()
 
-placeholder_symbol = :_
-
 function arg_pos(i, p)
-    p >=0 || error()
-    p == 0 && return BoundSymbol(placeholder_symbol)
+    p >= 1 || error()
     p == 1 && return ArgPos(i)
     ParentScope(arg_pos(i, p - 1))
 end
@@ -237,9 +234,17 @@ _get(::Val{x}) where {x} = x
 designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
 
 function normalize_bound_vars(ex)
+    placeholder_symbol = :_
+
+    function relabeler(x)
+        (i, p) = (x.arg_i, x.referent_depth - x.antecedent_depth)
+        p == 0 && return BoundSymbol(placeholder_symbol)
+        return arg_pos(i, p)
+    end
+
     ex1 = relabel_args(
         x -> x isa BoundSymbol,
-        x -> arg_pos(x.arg_i, x.referent_depth - x.antecedent_depth),
+        relabeler,
     ex)
 
     function check(ex)
