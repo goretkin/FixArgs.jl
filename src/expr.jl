@@ -62,18 +62,3 @@ end
 
 apply_once(check, apply, ex) = prewalk(_apply_once(check, apply), ex, :init)
 escape_all_but(ex) = apply_once(do_escape, esc, ex)
-
-"""
-e.g.
-julia> dump(let x = 9
-       @xquote sqrt(x)
-       end)
-Expr
-    head: Symbol call
-    args: Array{Any}((2,))
-        1: sqrt (function of type typeof(sqrt))
-        2: Int64 9
-"""
-macro quote_some(ex)
-    uneval(escape_all_but(ex))
-end

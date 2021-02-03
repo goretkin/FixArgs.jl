@@ -45,8 +45,6 @@ unwrap_ParentScope(x::ParentScope, p=0) = unwrap_ParentScope(x._, p + 1)
 
 _get(::ArgPos{i}) where {i} = i
 
-
-
 lc_expr(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(lc_expr(expr.args[1]), lc_expr(expr.args[2]))
 lc_expr(expr::TypedExpr{Val{:call}, X}) where {X} = Call(lc_expr(expr.args[1]), map(lc_expr, expr.args[2:end])) # TODO handle TypedExpr with kwargs
 lc_expr(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(lc_expr, expr.args)
@@ -91,20 +89,4 @@ function normalize_bound_vars(ex)
     end
 
     return apply_once(check, apply, ex1)
-end
-
-macro xquote(ex)
-    # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
-    # otherwise cannot distinguish between original `BoundSymbol` and output of `designate_bound_arguments`
-    # Then these escaped `BoundSymbol`s should not be touched by `normalize_bound_vars`
-    ex1 = clean_expr(ex)
-    ex2 = designate_bound_arguments(ex1)
-
-    # escape everything that isn't a bound variable, so that they are evaluated in the macro call context.
-    # unquoted `Symbol` comes to represent free variables in the λ calculus (as does e.g. `:(Base.sqrt)`, see `do_escape`)
-    # `BoundSymbol{::Symbol}` comes to represent bound variables in the λ calculus
-    ex3 = escape_all_but(ex2)
-    ex4 = normalize_bound_vars(ex3)
-    val = lc_expr(TypedExpr(ex4))
-    uneval(val) # note: uneval handles `Expr(:escape, ...)` specially.
 end

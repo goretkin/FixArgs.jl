@@ -55,3 +55,35 @@ function Base.show(io::IO, x::Fix2)
     show(io, x.body.args[2])
     print(io, ")")
 end
+
+
+"""
+e.g.
+julia> dump(let x = 9
+       @xquote sqrt(x)
+       end)
+Expr
+    head: Symbol call
+    args: Array{Any}((2,))
+        1: sqrt (function of type typeof(sqrt))
+        2: Int64 9
+"""
+macro quote_some(ex)
+    uneval(escape_all_but(ex))
+end
+
+macro xquote(ex)
+    # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
+    # otherwise cannot distinguish between original `BoundSymbol` and output of `designate_bound_arguments`
+    # Then these escaped `BoundSymbol`s should not be touched by `normalize_bound_vars`
+    ex1 = clean_expr(ex)
+    ex2 = designate_bound_arguments(ex1)
+
+    # escape everything that isn't a bound variable, so that they are evaluated in the macro call context.
+    # unquoted `Symbol` comes to represent free variables in the λ calculus (as does e.g. `:(Base.sqrt)`, see `do_escape`)
+    # `BoundSymbol{::Symbol}` comes to represent bound variables in the λ calculus
+    ex3 = escape_all_but(ex2)
+    ex4 = normalize_bound_vars(ex3)
+    val = lc_expr(TypedExpr(ex4))
+    uneval(val) # note: uneval handles `Expr(:escape, ...)` specially.
+end
