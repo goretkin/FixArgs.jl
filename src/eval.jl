@@ -49,7 +49,11 @@ xeval_esc(x::Call, ctx) = xeval(x, ctx)
 xeval_esc(x, ctx) = xeval(x, ctx)
 
 some_esc(old, new) = Some(new)
-some_esc(old::T, new::T) where T = new  # `Arg` or `Parent` did not get evaluated. Do not wrap in `Some`
+
+# do not wrap in `Some`
+some_esc(old::ArgPos, new::ArgPos) = new
+some_esc(old::ParentScope, new::ParentScope) = new
+some_esc(old::Call, new::Call) = new
 
 _xeval_call_args_esc(c::Call, ctx::Context) = map(x -> some_esc(x, xeval_esc(x, ctx)), c.args)   # TODO kwargs
 
