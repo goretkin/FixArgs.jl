@@ -1,3 +1,7 @@
+#=
+type aliases
+=#
+
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
 # define constructor consistent with type alias
 function FixNew(args_in, f, args_call)
@@ -14,6 +18,11 @@ end
 function Fix2(f, x)
     FixNew(Arity(1), f, (ArgPos(1), x))
 end
+
+
+#=
+`show` methods
+=#
 
 function Base.show(io::IO, a::Union{ParentScope, ArgPos{i} where i})
     _get(::ArgPos{i}) where {i} = i
@@ -56,6 +65,10 @@ function Base.show(io::IO, x::Fix2)
     print(io, ")")
 end
 
+
+#=
+macros
+=#
 
 """
 e.g.
