@@ -82,9 +82,9 @@ end
 @testset "compute nested Call" begin
     foo = x -> (y -> (string.(1:x))[y])
     bar = z -> foo(z)(z)
-    L1 = @xquote z -> foo(z)(z)
+    Xbar = @xquote z -> foo(z)(z)
     for i = 1:5
-        @test L1(i) == bar(i)
+        @test Xbar(i) == bar(i)
     end
 end
 
@@ -95,10 +95,10 @@ end
     # use `UnitRange` directly
     # same with Broadcast dot notation, use `map` directly
     # same with square brackets, use `getindex` directly
-    L = @xquote x -> (y -> getindex(map(string, UnitRange(1, x)), y))
-    L1 = @xquote z -> L(z)(z)
+    Xfoo = @xquote x -> (y -> getindex(map(string, UnitRange(1, x)), y))
+    Xbar = @xquote z -> Xfoo(z)(z)
     for i = 1:5
-        @test L1(i) == bar(i)
+        @test Xbar(i) == bar(i)
     end
 end
 
