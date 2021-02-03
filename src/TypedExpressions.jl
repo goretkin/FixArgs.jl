@@ -75,27 +75,7 @@ function uneval(x::Tuple)
     # :($(map(uneval, x)...))
 end
 
-struct Arity{P, KW}
-end
-
-# TODO choose a representation for keyword arguments
-const NoKeywordArguments = Nothing
-function Arity(p_arity, kw_arity = NoKeywordArguments)
-    return Arity{p_arity, NoKeywordArguments}()
-end
-struct ArgPos{N}
-end
-
-ArgPos(i) = ArgPos{i}()
-
-function arg_pos(i, p)
-    p >= 1 || error()
-    p == 1 && return ArgPos(i)
-    ParentScope(arg_pos(i, p - 1))
-end
-struct ParentScope{T}
-    _::T
-end
+include("types.jl")
 
 function _show_arg_pos(io::IO, i, p)
     print(io, "arg_pos($i, $p)")
@@ -114,16 +94,6 @@ end
 uneval(x::Arity{P, KW}) where {P, KW} = :(Arity{$(uneval(P)), $(uneval(KW))}())
 uneval(x::ArgPos{N}) where {N} = :(ArgPos($(uneval(N))))
 uneval(x::ParentScope) = :(ParentScope($(uneval(x._))))
-
-struct Lambda{A, B}
-    args::A
-    body::B
-end
-
-struct Call{F, A}
-    f::F
-    args::A
-end
 
 # TODO investigate difference between these two, (and in general, all `uneval`s) with respect to returning from a macro:
 uneval(x::Lambda) = :(Lambda($(uneval(x.args)), $(uneval(x.body))))     # implementation 1
