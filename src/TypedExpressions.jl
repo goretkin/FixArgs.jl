@@ -107,6 +107,20 @@ struct ParentScope{T}
     _::T
 end
 
+function _show_arg_pos(io::IO, i, p)
+    print(io, "arg_pos($i, $p)")
+end
+
+unwrap_ParentScope(x::ArgPos, p=0) = (x, p)
+unwrap_ParentScope(x::ParentScope, p=0) = unwrap_ParentScope(x._, p + 1)
+
+_get(::ArgPos{i}) where {i} = i
+
+function Base.show(io::IO, a::Union{ParentScope, ArgPos{i} where i})
+    (_a, p) = unwrap_ParentScope(a)
+    _show_arg_pos(io, _get(_a), p)
+end
+
 uneval(x::Arity{P, KW}) where {P, KW} = :(Arity{$(uneval(P)), $(uneval(KW))}())
 uneval(x::ArgPos{N}) where {N} = :(ArgPos($(uneval(N))))
 uneval(x::ParentScope) = :(ParentScope($(uneval(x._))))
@@ -314,11 +328,14 @@ xeval(a, ctx::Nothing) = a
 # TODO:
 #xeval(a::Val{T}, ctx::Union{Nothing, <:Context}) = T
 
+_wrap_arg(x::ArgPos) = ParentScope(x)
+_wrap_arg(x) = x
 xeval(a::ArgPos{i}, ctx::Context{T, P}) where {i, T, P} = ctx.this[i]
-xeval(a::ParentScope{A}, ctx::Context) where {A} = xeval(a._, ctx.parent)
+xeval(a::ParentScope{A}, ctx::Context) where {A} = _wrap_arg(xeval(a._, ctx.parent))
 
 
 function xeval(c::Lambda, ctx::Context)
+    #println("xeval(::Lambda, ::Context) : $(c)")
     Lambda(
         c.args,
         xeval(c.body, Context(nothing, ctx))
@@ -333,7 +350,7 @@ _xeval_call_f(f, ctx) = f
 _xeval_call_f(f::Call, ctx) = xeval(f, ctx)
 
 function xeval(c::Call, ctx::Context)
-    # println("xeval(::Call, ::Context) : $(c)")
+    #println("xeval(::Call, ::Context) : $(c)")
     args_eval = _xeval_call_args(c, ctx)
     f = _xeval_call_f(c.f, ctx)
     f(args_eval...)    # TODO kwargs
@@ -345,7 +362,7 @@ xeval_esc(x::Call, ctx) = xeval(x, ctx)
 _xeval_call_args_esc(c::Call, ctx::Context) = map(x -> xeval_esc(x, ctx), c.args)   # TODO kwargs
 
 function xeval(c::Call, ctx::Context{Nothing, P}) where P
-    # println("xeval(::Call, ::Context{Nothing, ...}) : $(c)")
+    #println("xeval(::Call, ::Context{Nothing, ...}) : $(c)")
     # this was invoked by `xeval(::Lambda, ...)`
     # which means we are not going to call `c.f`
     Call(

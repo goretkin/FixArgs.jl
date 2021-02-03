@@ -77,6 +77,9 @@ end
 @testset "compute nested Lambda" begin
     L = @xquote x -> ( y -> ==(x, y) )
     @test FixArgs.TypedExpressions.xapply(L, 2) == FixArgs.TypedExpressions.Fix1(==, 2)
+
+    Lxyz = @xquote x -> y -> z -> (x * y * z)
+    @test Lxyz("a")("b")("c") == "abc"
 end
 
 @testset "compute nested Call" begin
