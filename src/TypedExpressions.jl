@@ -53,36 +53,3 @@ Lambda-Call expression
 """
 lc_expr(x) = x
 
-designate_bound_arguments(ex) = relabel_args(x -> x isa Symbol, x -> BoundSymbol(x.sym), ex)
-
-function normalize_bound_vars(ex)
-    placeholder_symbol = :_
-
-    # relabel all `BoundSymbol`s:
-    # key: head -> body
-    # those in bodies get renamed by `arg_pos`
-    # those in heads get renamed to a placeholder
-    function relabeler(x)
-        (i, p) = (x.arg_i, x.referent_depth - x.antecedent_depth)
-        p == 0 && return BoundSymbol(placeholder_symbol)
-        return arg_pos(i, p)
-    end
-
-    ex1 = relabel_args(
-        x -> x isa BoundSymbol,
-        relabeler,
-    ex)
-
-    # replace all heads, which should all be placeholders with `Arity`
-    # TODO ensure all heads were replaced (any heads without all placeholders is an error at this point)
-    function check(ex)
-        ex isa Expr && ex.head === :tuple && all(==(BoundSymbol(placeholder_symbol)), ex.args)
-    end
-
-    function apply(ex)
-        n = length(ex.args)
-        return Arity(n)
-    end
-
-    return apply_once(check, apply, ex1)
-end
