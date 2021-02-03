@@ -327,16 +327,25 @@ end
 
 _xeval_call_args(c::Call, ctx::Context) = map(x -> xeval(x, ctx), c.args)           # TODO kwargs
 
+# Alternative to this definition involves using `Some` to wrap the f field as well, so that plain `xeval` can be used
+# (after `Some` is implemented in this branch)
+_xeval_call_f(f, ctx) = f
+_xeval_call_f(f::Call, ctx) = xeval(f, ctx)
+
 function xeval(c::Call, ctx::Context)
+    # println("xeval(::Call, ::Context) : $(c)")
     args_eval = _xeval_call_args(c, ctx)
-    c.f(args_eval...)    # TODO kwargs
+    f = _xeval_call_f(c.f, ctx)
+    f(args_eval...)    # TODO kwargs
 end
 
-xeval_esc(x, ctx) = x
+xeval_esc(x, ctx) = x # specifically, pass through `ArgPos`
 xeval_esc(x::ParentScope, ctx) = xeval(x, ctx)
+xeval_esc(x::Call, ctx) = xeval(x, ctx)
 _xeval_call_args_esc(c::Call, ctx::Context) = map(x -> xeval_esc(x, ctx), c.args)   # TODO kwargs
 
 function xeval(c::Call, ctx::Context{Nothing, P}) where P
+    println("xeval(::Call, ::Context{Nothing, ...}) : $(c)")
     # this was invoked by `xeval(::Lambda, ...)`
     # which means we are not going to call `c.f`
     Call(
@@ -357,4 +366,5 @@ function xapply(f::Lambda, args, ctx_parent=nothing)
     xeval(f.body, Context(_ctx_this(f.args, args), ctx_parent))
 end
 
+(f::Lambda)(args...) = xapply(f, args)
 end

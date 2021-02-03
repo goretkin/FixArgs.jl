@@ -74,10 +74,34 @@ end
     @test false == FixArgs.TypedExpressions.xapply(L, 2)
 end
 
-@testset "compute nested lambda" begin
+@testset "compute nested Lambda" begin
     L = @xquote x -> ( y -> ==(x, y) )
     @test FixArgs.TypedExpressions.xapply(L, 2) == FixArgs.TypedExpressions.Fix1(==, 2)
 end
+
+@testset "compute nested Call" begin
+    foo = x -> (y -> (string.(1:x))[y])
+    bar = z -> foo(z)(z)
+    L1 = @xquote z -> foo(z)(z)
+    for i = 1:5
+        @test L1(i) == bar(i)
+    end
+end
+
+@testset "compute nested Lambda and Call" begin
+    foo = x -> (y -> (string.(1:x))[y])
+    bar = z -> foo(z)(z)
+    # the colon syntax  happens during lowering, which I do not know how to hook into.
+    # use `UnitRange` directly
+    # same with Broadcast dot notation, use `map` directly
+    # same with square brackets, use `getindex` directly
+    L = @xquote x -> (y -> getindex(map(string, UnitRange(1, x)), y))
+    L1 = @xquote z -> L(z)(z)
+    for i = 1:5
+        @test L1(i) == bar(i)
+    end
+end
+
 macro _test1(ex)
     quote
         ($ex, $(esc(ex)))
