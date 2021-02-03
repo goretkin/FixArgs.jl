@@ -55,6 +55,8 @@ function xeval(c::Call, ctx::Context{Nothing, P}) where P
     #println("xeval(::Call, ::Context{Nothing, ...}) : $(c)")
     # this was invoked by `xeval(::Lambda, ...)`
     # which means we are not going to call `c.f`
+    # since the `Call` could contain unevaluated terms
+    # TODO evaluate if possible? explore different evaluation schemes.
     Call(
         xeval_esc(c.f, ctx),
         _xeval_call_args_esc(c, ctx)
@@ -69,7 +71,7 @@ end
 # for now, `Context` is all positional.
 # but this could be extended so that `xeval` may work more generally
 # e.g. with default arguments
-_ctx_this(args_formal, args_actual) = args_actual
+_ctx_this(args_formal::Arity, args_actual) = args_actual
 
 function xapply(f::Lambda, args, ctx_parent=nothing)
     check_arity(f, args)
