@@ -40,7 +40,7 @@ function xeval(c::Call, ctx::Context)
     #println("xeval(::Call, ::Context) : $(c)")
     args_eval = _xeval_call_args(c, ctx)
     f = xeval(c.f, ctx)
-    f(args_eval...)    # TODO kwargs
+    _xapply(f, args_eval)
 end
 
 xeval_esc(x::ArgPos, ctx) = x # not evaluating these
@@ -82,6 +82,12 @@ _ctx_this(args_formal::Arity, args_actual) = args_actual
 function xapply(f::Lambda, args, ctx_parent=nothing)
     check_arity(f, args)
     xeval(f.body, Context(_ctx_this(f.args, args), ctx_parent))
+end
+
+# TODO kwargs
+# e.g. define for FrankenTuple
+function _xapply(f, args::Tuple)
+    f(args...)
 end
 
 (f::Lambda)(args...) = xapply(f, args)
