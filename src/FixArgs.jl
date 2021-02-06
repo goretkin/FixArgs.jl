@@ -167,15 +167,15 @@ end
 interleave(bind::Template, args) = interweave(bind._, args)
 
 # if macro invocation contains a "bare" argument, wrap it
-SomeUnlessNot(x) = Some(x)
+xescape(x) = Some(x)
 
 # exceptions
-SomeUnlessNot(x::Fix) = x
-SomeUnlessNot(x::Val) = x
+xescape(x::Fix) = x
+xescape(x::Val) = x
 
 # `Some` is used to escape the exceptions, do not wrap again
-SomeUnlessNot(x::Some{<:Fix}) = x
-SomeUnlessNot(x::Some{<:Val}) = x
+xescape(x::Some{<:Fix}) = x
+xescape(x::Some{<:Val}) = x
 
 function escape_arg(ex)
     if Meta.isexpr(ex, :kw)
@@ -188,7 +188,7 @@ function escape_arg(ex)
         p = parse(Int, string(ex)[2:end])
         ArgPos{p}()
     else
-        Expr(:call, SomeUnlessNot, ex)
+        Expr(:call, xescape, ex)
     end
 end
 

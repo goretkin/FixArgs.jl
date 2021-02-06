@@ -78,17 +78,17 @@ macros
 
 # to enable static data (data baked into the type)
 # in macro invocation wrap everything that will be evaluated at macro usage scope
-SomeUnlessNot(x) = Some(x)
+xescape(x) = Some(x)
 
 # exceptions
-SomeUnlessNot(x::Val) = x
+xescape(x::Val) = x
 
 # `Some` is used to escape the exceptions, do not wrap again
-SomeUnlessNot(x::Some{<:Val}) = x
+xescape(x::Some{<:Val}) = x
 
 function static_escape(ex)
     @show ex
-    Expr(:call, SomeUnlessNot, ex)
+    Expr(:call, xescape, ex)
 end
 
 # `escape_all_but_old` is supporting some unit tests.
