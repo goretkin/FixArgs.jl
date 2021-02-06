@@ -77,7 +77,8 @@ macros
 =#
 
 # to enable static data (data baked into the type)
-# in macro invocation wrap everything that will be evaluated at macro usage scope
+# and enable all values, e.g. `ArgPos(1)`, to be bound.
+# in macro invocation `xescape` everything that will be evaluated at macro usage scope
 xescape(x) = Some(x)
 
 # exceptions
@@ -86,14 +87,14 @@ xescape(x::Val) = x
 # `Some` is used to escape the exceptions, do not wrap again
 xescape(x::Some{<:Val}) = x
 
-function static_escape(ex)
+function xescape_expr(ex)
     @show ex
     Expr(:call, xescape, ex)
 end
 
 # `escape_all_but_old` is supporting some unit tests.
 escape_all_but_old(ex) = apply_once(do_escape, esc, ex)
-escape_all_but(ex) = apply_once(do_escape, x -> esc(static_escape(x)), ex)
+escape_all_but(ex) = apply_once(do_escape, x -> esc(xescape_expr(x)), ex)
 
 """
 e.g.
