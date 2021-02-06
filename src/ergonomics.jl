@@ -110,7 +110,9 @@ macro quote_some(ex)
     uneval(escape_all_but_old(ex))
 end
 
-macro xquote(ex)
+function _xquote(ex)
+    # does escaping, so the `value` produced here only makes sense in the context of a macro that does `uneval(value)`
+
     # TODO escape any e.g. `BoundSymbol` before passing to `designate_bound_arguments`.
     # otherwise cannot distinguish between original `BoundSymbol` and output of `designate_bound_arguments`
     # Then these escaped `BoundSymbol`s should not be touched by `normalize_bound_vars`
@@ -123,5 +125,10 @@ macro xquote(ex)
     ex3 = escape_all_but(ex2)
     ex4 = normalize_bound_vars(ex3)
     value = lc_expr(TypedExpr(ex4))
+    return value
+end
+
+macro xquote(ex)
+    value = _xquote(ex)
     uneval(value) # note: uneval handles `Expr(:escape, ...)` specially.
 end
