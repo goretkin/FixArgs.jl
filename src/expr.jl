@@ -29,30 +29,6 @@ function prewalk(f, x, state)
     walk(x′, x -> prewalk(f, x, state′), identity)
 end
 
-function do_escape(s::Symbol)
-    return true
-end
-
-function do_escape(s::QuoteNode)
-    @show s
-    return true
-end
-
-function do_escape(e::Expr)
-    e.head === :call && return false
-    e.head === :-> && return false
-    e.head === :tuple && return false # preserve argument (args[1]) of a `->`
-    e.head === :kw && return false
-    e.head === :parameters && return false
-    return true # to escape e.g. `Base.sqrt`
-end
-
-function do_escape(e::BoundSymbol)
-    return false
-end
-
-do_escape(e) = true # all else
-
 function _apply_once(check, apply)
     function walk_f(x, s)
         if s === :init && check(x)

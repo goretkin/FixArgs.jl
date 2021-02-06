@@ -134,7 +134,7 @@ function _xquote(ex)
     ex2 = designate_bound_arguments(ex1)
 
     # escape everything that isn't a bound variable, so that they are evaluated in the macro call context.
-    # unquoted `Symbol` comes to represent free variables in the λ calculus (as does e.g. `:(Base.sqrt)`, see `do_escape`)
+    # unquoted `Symbol` comes to represent free variables in the λ calculus (as does e.g. `:(Base.sqrt)`)
     # `BoundSymbol{::Symbol}` comes to represent bound variables in the λ calculus
     ex3 = escape_all_but(ex2)
     ex4 = normalize_bound_vars(ex3)
