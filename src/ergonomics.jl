@@ -88,7 +88,6 @@ xescape(x::Val) = x
 xescape(x::Some{<:Val}) = x
 
 function xescape_expr(ex)
-    @show ex
     Expr(:call, xescape, ex)
 end
 

@@ -71,8 +71,6 @@ function relabel_args(is_symbol, labeler, ex, labels_stack = [], this_depth = 1)
 
     # don't relabel keyword argument names
     if ex isa Expr && ex.head === :kw
-        println("kw")
-        @show ex
         length(ex.args) == 2 || error("Unexpected: $ex")
         return Expr(ex.head, ex.args[1], relabel_args(is_symbol, labeler, ex.args[2], labels_stack, next_depth))
     end
