@@ -40,6 +40,8 @@ function do_escape(e::Expr)
     e.head === :call && return false
     e.head === :-> && return false
     e.head === :tuple && return false # preserve argument (args[1]) of a `->`
+    e.head === :kw && return false
+    e.head === :parameters && return false
     return true # to escape e.g. `Base.sqrt`
 end
 
@@ -94,4 +96,75 @@ function normalize_bound_vars(ex)
     end
 
     return apply_once(check, apply, ex1)
+end
+
+
+# copied from:
+# https://github.com/schlichtanders/ExprParsers.jl/blob/10d32171128b92ddf4758de8dbcbfe51cf2bb4eb/src/Utils.jl#L15-L39
+"""
+    isexpr(expr) -> Bool
+    isexpr(expr, head) -> Bool
+Checks whether given value isa `Base.Expr` and if further given `head`, it also checks whether
+the `head` matches `expr.head`.
+# Examples
+```jldoctest
+julia> using ExprParsers
+julia> EP.isexpr(:(a = hi))
+true
+julia> EP.isexpr(12)
+false
+julia> EP.isexpr(:(f(a) = a), :(=))
+true
+julia> EP.isexpr(:(f(a) = a), :function)
+false
+```
+"""
+isexpr(::Expr) = true
+isexpr(other) = false
+isexpr(expr::Expr, head::Symbol) = expr.head == head
+isexpr(other, head::Symbol) = false
+
+# copied from:
+# https://github.com/schlichtanders/ExprParsers.jl/blob/10d32171128b92ddf4758de8dbcbfe51cf2bb4eb/src/expr_parsers_with_parsed.jl#L469-L490
+function _extract_args_kwargs__collect_all_kw_into_kwargs(expr_args)
+    args = []
+    kwargs = []
+
+    otherargs, parameters = if isempty(expr_args)
+      [], []
+    elseif isexpr(expr_args[1], :parameters)
+      expr_args[2:end], expr_args[1].args
+    else
+      expr_args, []
+    end
+
+    for p in otherargs
+      if isexpr(p, :kw)
+        push!(kwargs, p)
+      else
+        push!(args, p)
+      end
+    end
+    append!(kwargs, parameters)
+    args, kwargs
+end
+
+function _kwargs_to_named_tuple(kwargs)
+    function unescape(ex)
+        ex isa Expr && ex.head === :escape && return ex.args[1]
+        error("expected escape, not $ex")
+    end
+
+    # `escape_all_but` escapes too much. when that is fixed, this hack can be removed.
+    function escape_hack(ex)
+        _ex = unescape(ex)
+        did_match = MacroTools.@capture _ex f_(s_)
+        did_match || error("expected match")
+        # f should be `xescape`
+        return s
+    end
+
+    all(ex -> isexpr(ex, :kw), kwargs) || error()
+    all(ex -> length(ex.args) == 2, kwargs) || error()
+    NamedTuple((escape_hack(ex.args[1]) => ex.args[2] for ex in kwargs))
 end

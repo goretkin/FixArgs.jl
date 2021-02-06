@@ -4,6 +4,8 @@ authors = ["Gustavo Goretkin <gustavo.goretkin@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
+ExprParsers = "c5caad1f-83bd-4ce8-ac8e-4b29921e994e"
+FrankenTuples = "7e584817-dab4-53a9-9a51-4037a36b0ad0"
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 
 [compat]

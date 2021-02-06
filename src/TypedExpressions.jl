@@ -37,7 +37,16 @@ inv_typed_expr(val::Val{sym}) where sym = sym
 inv_typed_expr(x) = x
 
 lc_expr(expr::TypedExpr{Val{:->}, Tuple{A, B}}) where {A, B} = Lambda(lc_expr(expr.args[1]), lc_expr(expr.args[2]))
-lc_expr(expr::TypedExpr{Val{:call}, X}) where {X} = Call(lc_expr(expr.args[1]), map(lc_expr, expr.args[2:end])) # TODO handle TypedExpr with kwargs
+
+function lc_expr(expr::TypedExpr{Val{:call}, X}) where {X}
+    _expr = inv_typed_expr(expr)
+    (_args, _kwargs) = _extract_args_kwargs__collect_all_kw_into_kwargs(_expr.args[2:end])
+    f = lc_expr(expr.args[1])
+    args = map(lc_expr ∘ typed_expr, tuple(_args...))  # TODO ensure it's a `::Tuple`
+    kwargs =  _kwargs_to_named_tuple(_kwargs)
+    Call(f, FrankenTuple(args, kwargs))
+end
+
 lc_expr(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(lc_expr, expr.args)
 lc_expr(expr::TypedExpr{Val{:escape}, X}) where {X} = inv_typed_expr(expr)
 

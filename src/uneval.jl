@@ -39,6 +39,10 @@ function uneval(x::Tuple)
     # :($(map(uneval, x)...))
 end
 
+function uneval(x::FrankenTuple)
+  :(FrankenTuple($(uneval(Tuple(x))), $(uneval(NamedTuple(x)))))
+end
+
 uneval(x::Arity{P, KW}) where {P, KW} = :(Arity{$(uneval(P)), $(uneval(KW))}())
 uneval(x::ArgPos{N}) where {N} = :(ArgPos($(uneval(N))))
 uneval(x::ParentScope) = :(ParentScope($(uneval(x._))))
