@@ -94,20 +94,19 @@ function xescape_expr(ex)
     Expr(:call, xescape, ex)
 end
 
-# `escape_all_but_old` is supporting some unit tests.
-escape_all_but_old(ex) = apply_once(do_escape, esc, ex)
+function escape_all_but(ex, apply = esc ∘ xescape_expr)
+    _escape_all_but(ex) = escape_all_but(ex, apply)
 
-function escape_all_but(ex)
-    apply = esc ∘ xescape_expr
     ex isa Symbol && return apply(ex)
     ex isa QuoteNode && return apply(ex)
     ex isa BoundSymbol && return ex
     ex isa Expr || return apply(ex)
 
     # don't escape any formal parameters
-    ex.head === :-> && return Expr(ex.head, ex.args[1], map(escape_all_but, ex.args[2:end])...)
-    ex.head === :kw && return Expr(ex.head, ex.args[1], map(escape_all_but, ex.args[2:end])...)
-    return Expr(ex.head, map(escape_all_but, ex.args)...)
+    ex.head === :call && return Expr(ex.head, map(_escape_all_but, ex.args)...)
+    ex.head === :-> && return Expr(ex.head, ex.args[1], map(_escape_all_but, ex.args[2:end])...)
+    ex.head === :kw && return Expr(ex.head, ex.args[1], map(_escape_all_but, ex.args[2:end])...)
+    return apply(ex) # to escape e.g. `Base.sqrt`
 end
 
 """
@@ -122,7 +121,7 @@ Expr
         2: Int64 9
 """
 macro quote_some(ex)
-    uneval(escape_all_but_old(ex))
+    uneval(escape_all_but(ex, esc))
 end
 
 function _xquote(ex)
