@@ -34,7 +34,9 @@ function xeval(c::Lambda, ctx::Context)
     )
 end
 
-_xeval_call_args(c::Call, ctx::Context) = map(x -> xeval(x, ctx), c.args)           # TODO kwargs
+# kwargs should work with Base.map(f, ::FrankenTuple)
+# TODO: define `Splat{T}` to represent e.g. `@xquote x -> foo(x...)`
+_xeval_call_args(c::Call, ctx::Context) = map(x -> xeval(x, ctx), c.args)
 
 function xeval(c::Call, ctx::Context)
     #println("xeval(::Call, ::Context) : $(c)")
@@ -84,8 +86,6 @@ function xapply(f::Lambda, args, ctx_parent=nothing)
     xeval(f.body, Context(_ctx_this(f.args, args), ctx_parent))
 end
 
-# TODO kwargs
-# e.g. define for FrankenTuple
 function _xapply(f, args::Tuple)
     f(args...)
 end
@@ -95,3 +95,7 @@ function _xapply(f, args::FrankenTuple)
 end
 
 (f::Lambda)(args...) = xapply(f, args)
+
+# TODO kwargs at call site
+# e.g.
+# (f::Lambda)(args..., kwargs...) = xapply(f, FrankenTuple(args, kwargs.data))

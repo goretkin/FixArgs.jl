@@ -119,6 +119,57 @@ end
     @test true
 end
 
+@testset "basics" begin
+    @test  fix(≈, 1, nothing, atol=1.1)(2)
+    @test  fix(≈, 1, nothing, )(2, atol=1.1)
+    @test !fix(≈, 1, nothing, atol=1.1)(2, atol=0.9)
+    @test !fix(≈, 1, nothing, atol=0.9)(2)
+    @test  fix(≈, 1, nothing, atol=0.9)(2, atol=1.1)
+    @test  fix(≈, 1, nothing, atol=0.9)(2, atol=2)
+
+    @test fix(≈, nothing, nothing, atol=1.1)(1,2)
+    @test !fix(≈, nothing, nothing, atol=0.9)(1,2)
+
+    @test  (@fix ≈(1, _, atol=1.1))(2)
+    @test  (@fix ≈(1, _)          )(2, atol=1.1)
+    @test !(@fix ≈(1, _, atol=1.1))(2, atol=0.9)
+    @test !(@fix ≈(1, _, atol=0.9))(2)
+    @test  (@fix ≈(1, _, atol=0.9))(2, atol=1.1)
+    @test  (@fix ≈(1, _, atol=0.9))(2, atol=2)
+    @test  (@fix ≈(_, _, atol=1.1))(1,2)
+    @test !(@fix ≈(_, _, atol=0.9))(1,2)
+
+    x = "hello"
+    @test @fix(identity(_))(x) === x
+    xs = [1, 2]
+    @test @fix(+(_, xs...))(2) === 2 + 1 + 2
+    @test @fix(_ + 1 + _)(2,2) === 2 + 1 + 2
+
+    kw = (atol=1, rtol=0)
+    @test  (@fix ≈(_,_;kw...))(1,2)
+    @test !(@fix ≈(_,_;kw...))(1,2.1)
+
+    f(args...; kw...) = (args, kw.data)
+    @test (@fix f(1, _, 3, x=1, y=2))(2) === ((1,2,3),(x=1,y=2))
+    kw = (x=1, y=42)
+    @test (@fix f(1, _, 3; kw...))(2, y=2) === ((1,2,3),(x=1,y=2))
+
+    a2 = @inferred fix(≈, nothing, nothing)
+    b2 = @inferred fix(≈, nothing, nothing, atol=1)
+    c2 = @inferred fix(≈, nothing, nothing, atol=1, rtol=2)
+    a1 = @inferred fix(≈, Some(3), nothing, atol=1, rtol=2)
+    @inferred a2(1,2)
+    @inferred b2(1,2)
+    @inferred c2(1,2)
+    @inferred a1(1.0)
+
+    @test_throws Exception @fix(_ + _)(1, 2, 3)
+    @test_throws Exception @fix(_ + _)(1)
+end
+
+
+
+
 macro _test1(ex)
     quote
         ($ex, $(esc(ex)))
