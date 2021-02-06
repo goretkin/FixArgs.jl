@@ -122,6 +122,6 @@ macro xquote(ex)
     # `BoundSymbol{::Symbol}` comes to represent bound variables in the λ calculus
     ex3 = escape_all_but(ex2)
     ex4 = normalize_bound_vars(ex3)
-    val = lc_expr(TypedExpr(ex4))
-    uneval(val) # note: uneval handles `Expr(:escape, ...)` specially.
+    value = lc_expr(TypedExpr(ex4))
+    uneval(value) # note: uneval handles `Expr(:escape, ...)` specially.
 end
