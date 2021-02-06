@@ -10,7 +10,9 @@ Applies `f` to each node in the given expression tree, returning the result.
 
 See also: [`prewalk`](@ref).
 """
-postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
+function postwalk(f, x)
+    walk(x, x -> postwalk(f, x), f)
+end
 
 """
     prewalk(f, expr)
