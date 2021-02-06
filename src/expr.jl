@@ -152,21 +152,7 @@ function _extract_args_kwargs__collect_all_kw_into_kwargs(expr_args)
 end
 
 function _kwargs_to_named_tuple(kwargs)
-    function unescape(ex)
-        ex isa Expr && ex.head === :escape && return ex.args[1]
-        error("expected escape, not $ex")
-    end
-
-    # `escape_all_but` escapes too much. when that is fixed, this hack can be removed.
-    function escape_hack(ex)
-        _ex = unescape(ex)
-        did_match = MacroTools.@capture _ex f_(s_)
-        did_match || error("expected match")
-        # f should be `xescape`
-        return s
-    end
-
     all(ex -> isexpr(ex, :kw), kwargs) || error()
     all(ex -> length(ex.args) == 2, kwargs) || error()
-    NamedTuple((escape_hack(ex.args[1]) => ex.args[2] for ex in kwargs))
+    NamedTuple((ex.args[1] => ex.args[2] for ex in kwargs))
 end

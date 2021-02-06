@@ -90,4 +90,8 @@ function _xapply(f, args::Tuple)
     f(args...)
 end
 
+function _xapply(f, args::FrankenTuple)
+    FrankenTuples.ftcall(f, args)
+end
+
 (f::Lambda)(args...) = xapply(f, args)

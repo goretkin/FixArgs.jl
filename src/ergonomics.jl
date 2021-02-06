@@ -8,15 +8,18 @@ function FixNew(args_in, f, args_call)
     Lambda(args_in, Call(f, args_call))
 end
 
+_type_from_pos_type(T) = FrankenTuple{T, (), Tuple{}}
+_val_from_pos_val(t) = FrankenTuple(t)
+
 # TODO will be `Some{T}`, not `T`, on the rhs
-const Fix1{F, T} = FixNew{typeof(Arity(1)), Some{F}, Tuple{Some{T}, typeof(ArgPos(1))}}
-const Fix2{F, T} = FixNew{typeof(Arity(1)), Some{F}, Tuple{typeof(ArgPos(1)), Some{T}}}
+const Fix1{F, T} = FixNew{typeof(Arity(1)), Some{F}, _type_from_pos_type(Tuple{Some{T}, typeof(ArgPos(1))})}
+const Fix2{F, T} = FixNew{typeof(Arity(1)), Some{F}, _type_from_pos_type(Tuple{typeof(ArgPos(1)), Some{T}})}
 # define constructor consistent with type alias
 function Fix1(f, x)
-    FixNew(Arity(1), Some(f), (Some(x), ArgPos(1)))
+    FixNew(Arity(1), Some(f), _val_from_pos_val((Some(x), ArgPos(1))))
 end
 function Fix2(f, x)
-    FixNew(Arity(1), Some(f), (ArgPos(1), Some(x)))
+    FixNew(Arity(1), Some(f), _val_from_pos_val((ArgPos(1), Some(x))))
 end
 
 
@@ -93,7 +96,19 @@ end
 
 # `escape_all_but_old` is supporting some unit tests.
 escape_all_but_old(ex) = apply_once(do_escape, esc, ex)
-escape_all_but(ex) = apply_once(do_escape, x -> esc(xescape_expr(x)), ex)
+
+function escape_all_but(ex)
+    apply = esc ∘ xescape_expr
+    ex isa Symbol && return apply(ex)
+    ex isa QuoteNode && return apply(ex)
+    ex isa BoundSymbol && return ex
+    ex isa Expr || return apply(ex)
+
+    # don't escape any formal parameters
+    ex.head === :-> && return Expr(ex.head, ex.args[1], map(escape_all_but, ex.args[2:end])...)
+    ex.head === :kw && return Expr(ex.head, ex.args[1], map(escape_all_but, ex.args[2:end])...)
+    return Expr(ex.head, map(escape_all_but, ex.args)...)
+end
 
 """
 e.g.

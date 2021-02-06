@@ -18,6 +18,7 @@ function uneval(x::Expr)
 end
 
 # tangential TODO: determine which one
+# TODO if this fallback is here, then it should ensure there are no `:escape` nodes
 uneval(x) = Meta.quot(x)
 # uneval(x) = Meta.QuoteNode(x)
 
@@ -37,6 +38,11 @@ end
 function uneval(x::Tuple)
     Expr(:tuple, map(uneval, x)...)
     # :($(map(uneval, x)...))
+end
+
+function uneval(x::NamedTuple)
+  names = fieldnames(typeof(x))
+  :(NamedTuple{$(names)}($(uneval(Tuple(x)))))
 end
 
 function uneval(x::FrankenTuple)
