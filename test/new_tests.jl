@@ -70,13 +70,13 @@ end
 
 @testset "compute" begin
     L = @xquote x -> ==(x, 1)
-    @test true == FixArgs.New.xapply(L, 1)
-    @test false == FixArgs.New.xapply(L, 2)
+    @test true == FixArgs.New.xapply(L, (1, ))
+    @test false == FixArgs.New.xapply(L, (2, ))
 end
 
 @testset "compute nested Lambda" begin
     L = @xquote x -> ( y -> ==(x, y) )
-    @test FixArgs.New.xapply(L, 2) == FixArgs.New.Fix1(==, 2)
+    @test FixArgs.New.xapply(L, (2, )) == FixArgs.New.Fix1(==, 2)
 
     Lxyz = @xquote x -> y -> z -> (x * y * z)
     @test Lxyz("a")("b")("c") == "abc"
