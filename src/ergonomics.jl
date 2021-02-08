@@ -157,13 +157,13 @@ fix_some(x) = Some(x)
 _assemble(wrap, state, args::Tuple{}) = ()
 _assemble(wrap, state, args) = __assemble(wrap, state, first(args), Base.tail(args))
 
-__assemble(wrap, state, arg1::Nothing, arg_rest::Tuple) = (
-    ArgPos(state), _assemble(wrap, state + 1, arg_rest)...)
+# it is necessary for `state` to be "represented in the type domain" for inference
+__assemble(wrap, state::Val{arg_i}, arg1::Nothing, arg_rest::Tuple) where arg_i= (
+    ArgPos(arg_i), _assemble(wrap, Val{arg_i + 1}(), arg_rest)...)
 __assemble(wrap, state, arg1, arg_rest::Tuple) = (
     wrap(arg1), _assemble(wrap, state, arg_rest)...)
 
-# TODO allow inference a chance
-assemble(args, wrap=Some) = _assemble(wrap, 1, args)
+assemble(args, wrap=Some) = _assemble(wrap, Val(1), args)
 
 function fix(f, args...; kwargs...)
     # With the old model, any extra kwargs could be passed only into one function.
