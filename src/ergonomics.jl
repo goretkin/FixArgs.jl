@@ -146,3 +146,76 @@ macro xquote(ex)
     value = _xquote(ex)
     uneval(value) # note: uneval handles `Expr(:escape, ...)` specially.
 end
+
+# old tests and old type equivocate between e.g. `1` and `Some(1)`
+# macro already does escaping, so arguments `args` here are already `xescape`d.
+fix_some(s::Some) = s
+fix_some(x::Nothing) = x
+fix_some(x) = Some(x)
+
+# TODO allow inference a chance
+function assemble(args, wrap=Some)
+    arg_i = 1
+    _args = []
+    for arg in args
+        if arg === nothing
+            push!(_args, ArgPos(arg_i)); arg_i += 1
+        else
+            push!(_args, wrap(arg))
+        end
+    end
+    tuple(_args...)
+end
+
+function fix(f, args...; kwargs...)
+    # With the old model, any extra kwargs could be passed only into one function.
+    # Not so anymore.
+    # to get some of the uses of `fix` working, need to introduce a `Splat` representation
+
+    arity(args) = count(isnothing, args)
+    call_args = FrankenTuple(assemble(args, fix_some), map(Some, kwargs.data))
+    Lambda(
+        Arity{arity(args), Nothing}(),
+        Call(
+            Some(f),
+            call_args
+        )
+    )
+end
+
+
+# roughly equivalent to xescape_arg
+function escape_arg(ex)
+    if Meta.isexpr(ex, :kw)
+        ex
+    elseif Meta.isexpr(ex, Symbol("..."))
+        :(map(Some, $(ex.args[1]))...)      # TODO also `SomeUnlessFix` here?
+    elseif ex == :_
+        nothing
+    elseif startswith(string(ex), "_")
+        p = parse(Int, string(ex)[2:end])
+        ArgPos{p}()
+    else
+        Expr(:call, xescape, ex)
+    end
+end
+
+"""
+`@fix f(_,b)` macroexpands to `fix(f, nothing, Some(b))`
+
+"""
+macro fix(call)
+    if !Meta.isexpr(call, :call)
+        error("Argument must be a function call expression, got $call")
+    end
+    f = call.args[1]
+    args = call.args[2:end]
+    has_parameters = !isempty(args) && Meta.isexpr(args[1], :parameters)
+    ret = if has_parameters
+        parameters = args[1]
+        Expr(:call, fix, parameters, f, escape_arg.(args[2:end])...)
+    else
+        Expr(:call, fix, f, escape_arg.(args)...)
+    end
+    esc(ret)
+end
