@@ -153,19 +153,17 @@ fix_some(s::Some) = s
 fix_some(x::Nothing) = x
 fix_some(x) = Some(x)
 
+# this pattern of splitting the recursion into two functions allows for handling the empty base case uniformly.
+_assemble(wrap, state, args::Tuple{}) = ()
+_assemble(wrap, state, args) = __assemble(wrap, state, first(args), Base.tail(args))
+
+__assemble(wrap, state, arg1::Nothing, arg_rest::Tuple) = (
+    ArgPos(state), _assemble(wrap, state + 1, arg_rest)...)
+__assemble(wrap, state, arg1, arg_rest::Tuple) = (
+    wrap(arg1), _assemble(wrap, state, arg_rest)...)
+
 # TODO allow inference a chance
-function assemble(args, wrap=Some)
-    arg_i = 1
-    _args = []
-    for arg in args
-        if arg === nothing
-            push!(_args, ArgPos(arg_i)); arg_i += 1
-        else
-            push!(_args, wrap(arg))
-        end
-    end
-    tuple(_args...)
-end
+assemble(args, wrap=Some) = _assemble(wrap, 1, args)
 
 function fix(f, args...; kwargs...)
     # With the old model, any extra kwargs could be passed only into one function.
