@@ -155,7 +155,7 @@ using FixArgs.New: fix, @fix
     kw = (x=1, y=42)
     #@test (@fix f(1, _, 3; kw...))(2, y=2) === ((1,2,3),(x=1,y=2))
 
-    #=
+
     a2 = @inferred fix(≈, nothing, nothing)
     b2 = @inferred fix(≈, nothing, nothing, atol=1)
     c2 = @inferred fix(≈, nothing, nothing, atol=1, rtol=2)
@@ -164,7 +164,7 @@ using FixArgs.New: fix, @fix
     @inferred b2(1,2)
     @inferred c2(1,2)
     @inferred a1(1.0)
-    =#
+
 
     @test_throws Exception @fix(_ + _)(1, 2, 3)
     @test_throws Exception @fix(_ + _)(1)

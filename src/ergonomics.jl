@@ -154,16 +154,21 @@ fix_some(x::Nothing) = x
 fix_some(x) = Some(x)
 
 # this pattern of splitting the recursion into two functions allows for handling the empty base case uniformly.
-_assemble(wrap, state, args::Tuple{}) = ()
+# I wanted to avoid a separate definition just to do type-inferred `count(isnothing, ::Tuple)`
+# so the recursion "bubbles up" the final `state`
+_assemble(wrap, state, args::Tuple{}) = ((), state)
 _assemble(wrap, state, args) = __assemble(wrap, state, first(args), Base.tail(args))
 
 # it is necessary for `state` to be "represented in the type domain" for inference
-__assemble(wrap, state::Val{arg_i}, arg1::Nothing, arg_rest::Tuple) where arg_i = (
-    (ArgPos(arg_i), _assemble(wrap, Val{arg_i + 1}(), arg_rest)...)
-)
-__assemble(wrap, state, arg1, arg_rest::Tuple) = (
-    (wrap(arg1), _assemble(wrap, state, arg_rest)...)
-)
+function __assemble(wrap, state::Val{arg_i}, arg1::Nothing, arg_rest::Tuple) where arg_i
+    (rest, state′) = _assemble(wrap, Val{arg_i + 1}(), arg_rest)
+    ((ArgPos(arg_i), rest...), state′)
+end
+
+function __assemble(wrap, state, arg1, arg_rest::Tuple)
+    (rest, state′) = _assemble(wrap, state, arg_rest)
+    ((wrap(arg1), rest...), state′)
+end
 
 assemble(args, wrap=Some) = _assemble(wrap, Val(1), args)
 
@@ -172,10 +177,13 @@ function fix(f, args...; kwargs...)
     # Not so anymore.
     # to get some of the uses of `fix` working, need to introduce a `Splat` representation
 
-    arity(args) = count(isnothing, args)
-    call_args = FrankenTuple(assemble(args, fix_some), map(Some, kwargs.data))
+    _get(::Val{i}) where {i} = i - 1
+
+    (_pos_call_args, _arity) = assemble(args, fix_some)
+    call_args = FrankenTuple(_pos_call_args, map(Some, kwargs.data))
+
     Lambda(
-        Arity{arity(args), Nothing}(),
+        Arity{_get(_arity), Nothing}(),
         Call(
             Some(f),
             call_args
