@@ -158,10 +158,12 @@ _assemble(wrap, state, args::Tuple{}) = ()
 _assemble(wrap, state, args) = __assemble(wrap, state, first(args), Base.tail(args))
 
 # it is necessary for `state` to be "represented in the type domain" for inference
-__assemble(wrap, state::Val{arg_i}, arg1::Nothing, arg_rest::Tuple) where arg_i= (
-    ArgPos(arg_i), _assemble(wrap, Val{arg_i + 1}(), arg_rest)...)
+__assemble(wrap, state::Val{arg_i}, arg1::Nothing, arg_rest::Tuple) where arg_i = (
+    (ArgPos(arg_i), _assemble(wrap, Val{arg_i + 1}(), arg_rest)...)
+)
 __assemble(wrap, state, arg1, arg_rest::Tuple) = (
-    wrap(arg1), _assemble(wrap, state, arg_rest)...)
+    (wrap(arg1), _assemble(wrap, state, arg_rest)...)
+)
 
 assemble(args, wrap=Some) = _assemble(wrap, Val(1), args)
 
