@@ -90,7 +90,17 @@ xescape(x::Val) = x
 # `Some` is used to escape the exceptions, do not wrap again
 xescape(x::Some{<:Val}) = x
 
+function xescape(x, annotation::Symbol)
+    annotation === :S && return Val(x)
+    error("unexpected annotation: $(annotation)")
+end
+
 function xescape_expr(ex)
+    if ex isa Expr && ex.head === :(::) && ex.args[2] isa Expr && ex.args[2].head === :(::)
+        # expression of form `(ex.args[1])::::(annotation)`
+        annotation = only(ex.args[2].args)
+        return Expr(:call, xescape, ex.args[1], QuoteNode(annotation))
+    end
     Expr(:call, xescape, ex)
 end
 

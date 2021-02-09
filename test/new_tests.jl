@@ -176,6 +176,12 @@ end
 
 @testset "static argument" begin
     @test 3 === FixArgs.New.xeval(FixArgs.New.Call(Some(+), FixArgs.New.FrankenTuple((Some(1), Val(2)), NamedTuple())))
+    frac = @xquote 1 / 2
+    frac2 = @xquote 1 / 2::::S
+    @test FixArgs.New.xeval(frac) === 1 / 2
+    @test FixArgs.New.xeval(frac2) === 1 / 2
+    @test sizeof(frac) == 16
+    @test sizeof(frac2) == 8
 end
 
 
