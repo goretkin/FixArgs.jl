@@ -170,7 +170,9 @@ using FixArgs.New: fix, @fix
     @test_throws Exception @fix(_ + _)(1)
 end
 
-
+@testset "type macro" begin
+    @test (FixArgs.@FixT string(::Int64)) === typeof(@xquote string(3))
+end
 
 
 macro _test1(ex)
