@@ -17,8 +17,7 @@ xeval(a::ArgPos{i}, ctx::Nothing) where {i} = a
 xeval(a::Some, ctx::Context) = something(a)
 xeval(a::Some, ctx::Nothing) = something(a)
 
-# TODO:
-#xeval(a::Val{T}, ctx::Union{Nothing, <:Context}) = T
+xeval(a::Val{T}, ctx) where T = T
 
 _wrap_arg(x::ArgPos) = ParentScope(x)
 _wrap_arg(x) = x
@@ -65,11 +64,14 @@ function xeval(c::Call, ctx::Context{Nothing, P}) where P
     # which means we are not going to call `c.f`
     # since the `Call` could contain unevaluated terms
     # TODO evaluate if possible? explore different evaluation schemes.
+    # TODO do not special-case this behavior, instead just detect unevaluated terms.
     Call(
         some_esc(c.f, xeval_esc(c.f, ctx)),
         _xeval_call_args_esc(c, ctx)
     )
 end
+
+xeval(c::Call) = xeval(c, Context(Context(nothing, nothing), nothing))
 
 function check_arity(f::Lambda{Arity{P, NoKeywordArguments}, B}, args) where {P, B}
     (P == length(args)) && return

@@ -174,6 +174,10 @@ end
     @test (FixArgs.@FixT string(::Int64)) === typeof(@xquote string(3))
 end
 
+@testset "static argument" begin
+    @test 3 === FixArgs.New.xeval(FixArgs.New.Call(Some(+), FixArgs.New.FrankenTuple((Some(1), Val(2)), NamedTuple())))
+end
+
 
 macro _test1(ex)
     quote
