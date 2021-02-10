@@ -75,6 +75,12 @@ function relabel_args(is_symbol, labeler, ex, labels_stack = [], this_depth = 1)
         return Expr(ex.head, ex.args[1], relabel_args(is_symbol, labeler, ex.args[2], labels_stack, next_depth))
     end
 
+    # don't touch
+    # TODO error on `@xquote x -> "hey$x"`
+    if Meta.isexpr(ex, :$)
+        return ex
+    end
+
     if ex isa Expr
         args_ = relabel_args.(Ref(is_symbol), Ref(labeler), ex.args, Ref(labels_stack), Ref(next_depth))
         return Expr(ex.head, args_...)

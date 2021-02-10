@@ -135,6 +135,7 @@ function escape_all_but(ex, apply = esc ∘ xescape_expr)
     ex.head === :call && return Expr(ex.head, map(_escape_all_but, ex.args)...)
     ex.head === :-> && return Expr(ex.head, ex.args[1], map(_escape_all_but, ex.args[2:end])...)
     ex.head === :kw && return Expr(ex.head, ex.args[1], map(_escape_all_but, ex.args[2:end])...)
+    ex.head === :$ && return apply(only(ex.args))
     return apply(ex) # to escape e.g. `Base.sqrt`
 end
 

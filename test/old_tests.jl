@@ -72,21 +72,21 @@ end
     using Base: divgcd
 
     function Base.:*(
-            x::Fix{typeof(/),Tuple{Some{T},Some{T}},NamedTuple{(),Tuple{}}},
-            y::Fix{typeof(/),Tuple{Some{T},Some{T}},NamedTuple{(),Tuple{}}},
+            x::(@FixT ::T / ::T),
+            y::(@FixT ::T / ::T),
            ) where {T}
         xn, yd = divgcd(something(x.args[1]), something(y.args[2]))
         xd, yn = divgcd(something(x.args[2]), something(y.args[1]))
-        ret = @fix (xn * yn) / (xd * yd) # TODO use `unsafe_rational` and `checked_mul`
+        ret = @xquote $(xn * yn) / $(xd * yd) # TODO use `unsafe_rational` and `checked_mul`
         ret
     end
 
-    half = (@fix 1/3) * (@fix 3/2)
-    @test half() == 0.5
-    half = (@fix UInt64(1)/UInt64(3)) * (@fix UInt64(3)/UInt64(2))
-    @test half() == 0.5
+    half = (@xquote 1/3) * (@xquote 3/2)
+    @test xeval(half) == 0.5
+    half = (@xquote $(UInt64(1)) / $(UInt64(3))) * (@xquote $(UInt64(3)) / $(UInt64(2)))
+    @test xeval(half) == 0.5
 
-    @test typeof(FixArgs.@fix union([1], [2])) == FixArgs.@FixT union(::Vector{Int64}, ::Vector{Int64})
+    @test typeof(@xquote union($([1]), $([2]))) == @FixT union(::Vector{Int64}, ::Vector{Int64})
 end
 
 @testset "lazy `union`" begin
