@@ -243,30 +243,20 @@ function isinferred(f, arg_types)
 end
 
 @testset "repeat arguments" begin
-    foo = (@fix tuple(_1, _2, _5, @fix (string(_1, _3, _4))))
+    foo = @xquote (_1, _2, _3, _4, _5) -> tuple(_1, _2, _5, (string(_1, _3, _4)))
     @test foo(:a, :b, "c", 1, 2.0) == (:a, :b, 2.0, "ac1")
     @test isinferred(foo, (Symbol, Symbol, String, Int64, Float64))
 
     # not enough args
     @test !isinferred(foo, (Symbol, Symbol, String, Int64))
 
-    # document that there's no error on extra args
-    @test foo(:a, :b, "c", 1, 2.0, :extra) == (:a, :b, 2.0, "ac1")
+    # error on extra args
+    @test_throws Exception foo(:a, :b, "c", 1, 2.0, :extra) == (:a, :b, 2.0, "ac1")
 end
 
 @testset "nested function definitions" begin
     foo = x -> (y -> *(x, y))
-
-    foo1 = Fix(
-        Fix,
-        Template((
-            Some(*),
-            Template((
-                ArgPos{1}(),
-                Some(ArgPos{1}())
-            ))
-        ))
-    )
+    foo1 = @xquote x -> (y -> *(x, y))
 
     @test foo("a")("b") == foo1("a")("b")
 end
