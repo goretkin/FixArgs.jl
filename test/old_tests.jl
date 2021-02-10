@@ -1,5 +1,5 @@
-using FixArgs: FixArgs
-using FixArgs.New: @xquote, xeval
+using FixArgs: FixArgs, @FixT
+using FixArgs.New: @xquote, xeval, fix, @fix
 using Test: @test, @test_broken, @testset, @inferred, @test_throws
 
 @testset "basics" begin
