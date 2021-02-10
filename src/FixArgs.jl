@@ -5,7 +5,9 @@ using .New
 export Fix1, Fix2
 
 function parse_type_spec(ex)
-    Meta.isexpr(ex, :(::), 1) && return (ex.args[1], Some)
+    dc = New._parse_double_colon(ex)
+    (!isnothing).(dc) == (false, true) && return (something(dc[2]), Some)
+    (!isnothing).(dc) == (true, false, true) && something(dc[3]) === :S && return (something(dc[1]), Val)
     throw(Base.Meta.ParseError("expected a `::T`, got $ex"))
 end
 

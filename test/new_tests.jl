@@ -172,6 +172,9 @@ end
 
 @testset "type macro" begin
     @test (FixArgs.@FixT string(::Int64)) === typeof(@xquote string(3))
+    v = @xquote string(1, 2::::S, (:three), (:four)::::S)
+    t = FixArgs.@FixT string(::Int64, 2::::S, ::Symbol, (:four)::::S)
+    @test t === typeof(v)
 end
 
 @testset "static argument" begin
