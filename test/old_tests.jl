@@ -175,43 +175,6 @@ end
     end
 end
 
-@testset "nested call two arguments" begin
-    nested = (Fix(/, ((Fix(+, (nothing, nothing), NamedTuple())), nothing), NamedTuple()))
-    @test nested((1,2), 3) === 1.0
-    @test (@inferred nested((1,2), 3)) === 1.0
-
-    @test_throws Exception nested()
-    @test_throws Exception nested(1)
-    @test_throws Exception nested(1, 2)
-    @test_throws Exception nested(1, 2, 3)
-    @test_throws Exception nested((1, 2, 4), 3)
-    @test_throws Exception nested((1, 2), 3, 5)
-    @test_throws Exception nested((1,), 3)
-    @test_throws Exception nested((), 3)
-
-    not_nested = (Fix(/, (Some(Fix(+, (nothing, nothing), NamedTuple())), nothing), NamedTuple()))
-    @test_throws MethodError not_nested(1)
-
-    @test (@fix (@fix _ + _) / _) === nested
-    @test (@fix Some(@fix _ + _) / _) === not_nested
-end
-
-@testset "nested call one arguments" begin
-    nested = (@fix (@fix _ + 1) / _)
-    @test_throws Exception nested(1, 2)
-    @test nested((1, ), 2) === 1.0
-end
-
-@testset "nested call zero arguments" begin
-    nested = (@fix (@fix 1 + 1) / _)
-    @test_throws Exception nested(2)
-    @test nested((), 2) === 1.0
-end
-
-@testset "static arguments" begin
-    @test FixArgs.interleave((nothing, 2, nothing, Some(nothing), Val{5}(), Some(Val{6}())), (1, 3)) == (1, 2, 3, nothing, 5, Val{6}())
-end
-
 @testset "Fixed Point Numbers as lazy `/` with static denominator" begin
     # e.g. Fixed{Int8,7} from `FixedPointNumbers.jl`
     MyQ0f7_instance = (@xquote Int8(3) / Val{128}())
