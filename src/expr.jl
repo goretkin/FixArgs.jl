@@ -85,7 +85,7 @@ end
 Checks whether given value isa `Base.Expr` and if further given `head`, it also checks whether
 the `head` matches `expr.head`.
 # Examples
-```jldoctest
+```julia
 julia> using ExprParsers
 julia> EP.isexpr(:(a = hi))
 true
