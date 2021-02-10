@@ -118,10 +118,10 @@ end
     # eagerly generates intermediate representation of `union(1:3,5:7)`
     eager = bounding(UnitRange, union(1:3,5:7))
     # use specialized method for bounding unions of `UnitRange`s
-    lazy = bounding(UnitRange, @xquote union(1:3,5:7))
+    lazy = bounding(UnitRange, @xquote union($(1:3),$(5:7)))
     @test eager == lazy
 
-    @test_throws MethodError bounding(UnitRange, @xquote union(1:3,5:7; a_kwarg=:unsupported))
+    @test_throws MethodError bounding(UnitRange, @xquote union($(1:3),$(5:7); a_kwarg=:unsupported))
 
     r1 = UInt64(1):UInt64(3)
     r2 = UInt64(5):UInt64(7)
@@ -132,7 +132,7 @@ end
 
     is3 = fix(==, Some(3), nothing)
     @test false == @inferred is3(4)
-    isnothing2 = Fix(===, (Some(nothing), nothing), ())
+    isnothing2 = fix(===, Some(nothing), nothing)
 
     @test isnothing2(nothing)
     @test isnothing2(:notnothing) == false
