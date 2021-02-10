@@ -177,17 +177,17 @@ end
 
 @testset "Fixed Point Numbers as lazy `/` with static denominator" begin
     # e.g. Fixed{Int8,7} from `FixedPointNumbers.jl`
-    MyQ0f7_instance = (@xquote Int8(3) / Val{128}())
+    MyQ0f7_instance = (@xquote $(Int8(3)) / 128::::S)
     MyQ0f7 = typeof(MyQ0f7_instance)
-    @test MyQ0f7 === Fix{typeof(/),Tuple{Some{Int8},Val{128}},NamedTuple{(),Tuple{}}}
+    @test MyQ0f7 === (@FixT ::Int8 / 128::::S)
 
-    Fixed{N,D} = Fix{typeof(/),Tuple{Some{N},Val{D}},NamedTuple{(),Tuple{}}}
+    Fixed{N,D} = @FixT ::N / D::::S
     function Base.:+(a::Fixed{N,D}, b::Fixed{N,D})::Fixed{N,D} where {N, D}
         n = something(a.args[1]) + something(b.args[1])
-        return (@xquote N(n) / Val{D}())
+        return (@xquote $(N(n)) / D::::S)
     end
 
-    @test (MyQ0f7_instance + MyQ0f7_instance)() === 6/128
+    @test xeval(MyQ0f7_instance + MyQ0f7_instance) === 6/128
     @test sizeof(MyQ0f7) == sizeof(Int8)
 end
 
