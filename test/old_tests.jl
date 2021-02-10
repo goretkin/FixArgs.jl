@@ -230,12 +230,11 @@ end
 
     fs = @fix string("a call ", _)
     ft = @fix tuple(:a_call, _)
-    fnt = @fix NamedTuple{(:a, :b)}(@fix tuple(:a_call, _))
+    fnt = @xquote x -> NamedTuple{(:a, :b)}(tuple(:a_call, x))
 
     @test fs(4) == "a call 4"
     @test ft(4) == (:a_call, 4)
-    @test fnt((4,)) ==  NamedTuple{(:a, :b)}((:a_call, 4))
-    @test_throws Exception fnt(4)
+    @test fnt(4) ==  NamedTuple{(:a, :b)}((:a_call, 4))
 end
 
 function isinferred(f, arg_types)
