@@ -200,20 +200,20 @@ end
     typed_data = [i + 10*i*im for i = 1:10]
     untyped_data = reinterpret(Int, typed_data)
 
-    MyComplex_instance = (@fix (@fix _ + @fix(_ * Val{im}()))(1, (2, )))
+    MyComplex_instance = @xquote 1 + 2 * im::::S
 
     # that this works is kind of besides the point
-    @test MyComplex_instance() === 1 + 2im
+    @test xeval(MyComplex_instance) === 1 + 2im
 
     # the point is that `MyComplex` is a memory representation of a complex number made from two `Int`s
     # `MyComplex` is just an alias for the structure of the type
     MyComplex = typeof(MyComplex_instance)
 
     new_typed_data = reinterpret(MyComplex, untyped_data)
-    @test map(x->x(), new_typed_data) == typed_data     # again, kind of besides the point
+    @test map(xeval, new_typed_data) == typed_data     # again, kind of besides the point
 
     # note that there are other structures possible which would give the same results
-    # for example `Val{im}() * _` instead of `_ * Val{im}()` gives a different structure with the same result
+    # for example `im::::S * 2` instead of `2 * im::::S` gives a different structure with the same result
     # swapping the arguments to `+` would give a different memory layout.
 
     # the point is also that you could define `*(::MyComplex, ::MyComplex)::MyComplex`
