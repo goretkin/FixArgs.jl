@@ -5,8 +5,8 @@ using .New
 export Fix1, Fix2
 
 function parse_type_spec(ex)
-    Meta.isexpr(ex, :(::), 1) || throw(Base.Meta.ParseError("expected a `::T`, got $ex"))
-    return (ex.args[1], Some)
+    Meta.isexpr(ex, :(::), 1) && return (ex.args[1], Some)
+    throw(Base.Meta.ParseError("expected a `::T`, got $ex"))
 end
 
 """

@@ -95,11 +95,30 @@ function xescape(x, annotation::Symbol)
     error("unexpected annotation: $(annotation)")
 end
 
+""""
+Should parse these
+`[:((a::b)::c), :(a::b), :(a::::c), :a, :(::b::c), :(::b), :(::::c)]`
+with pattern of `nothing`s, if padded on the right to be 3-tuples, counting in binary from 7 to 1
+"""
+function _parse_double_colon(ex)
+    # the splatting on the recursive calls makes different groupings produce the same result:
+    # e.g. `:((a::b)::c)` and `:(a::(b::c))`
+    if Meta.isexpr(ex, :(::))
+        if length(ex.args) == 1
+            return (nothing, _parse_double_colon(ex.args[1])...)
+        elseif length(ex.args) == 2
+            return (_parse_double_colon(ex.args[1])..., _parse_double_colon(ex.args[2])...)
+        end
+    else
+        return (Some(ex), )
+    end
+end
+
 function xescape_expr(ex)
-    if ex isa Expr && ex.head === :(::) && ex.args[2] isa Expr && ex.args[2].head === :(::)
-        # expression of form `(ex.args[1])::::(annotation)`
-        annotation = only(ex.args[2].args)
-        return Expr(:call, xescape, ex.args[1], QuoteNode(annotation))
+    p = _parse_double_colon(ex)
+    if (!isnothing).(p) == (true, false, true)
+        # expression of form `value::::annotation`
+        return Expr(:call, xescape, something(p[1]), QuoteNode(something(p[3])))
     end
     Expr(:call, xescape, ex)
 end
