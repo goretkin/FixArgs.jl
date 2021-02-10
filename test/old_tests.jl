@@ -52,34 +52,7 @@ using Test: @test, @test_broken, @testset, @inferred, @test_throws
     @test_throws Exception @fix(_ + _)(1)
 end
 
-@testset "@fix object structure" begin
-    f(args...;kw...) = args, kw
-    o = @fix f(1,2)
-    @test o.f    === f
-    @test o.args === (Some(1), Some(2))
-    @test o.kw   === NamedTuple()
-    @test typeof(o) === Fix{typeof(o.f), typeof(o.args), typeof(o.kw)}
-
-    o = @fix f(1,_, a=1, b=2.3)
-    @test o.f    === f
-    @test o.args === (Some(1), nothing)
-    @test o.kw   === (a=1, b=2.3)
-    @test typeof(o) === Fix{typeof(o.f), typeof(o.args), typeof(o.kw)}
-
-    o = @fix 1 + _
-    @test o.f    === +
-    @test o.args === (Some(1), nothing)
-    @test o.kw   === NamedTuple()
-    @test typeof(o) === Fix{typeof(o.f), typeof(o.args), typeof(o.kw)}
-
-    arr = [1,2]
-    o = @fix sum(arr; dim=1)
-    @test o.f    === sum
-    @test o.args === (Some(arr),)
-    @test o.kw   === (dim=1,)
-    @test typeof(o) === Fix{typeof(o.f), typeof(o.args), typeof(o.kw)}
-end
-
+#=
 @testset "fix(::Type, ...)" begin
     f = @inferred fix(CartesianIndex, nothing, Some(1))
     @test @inferred(f(2)) === CartesianIndex(2, 1)
@@ -88,6 +61,7 @@ end
     g = @inferred fix(modulo, nothing, by = UInt8)
     @test_broken @inferred(g(271)) === 0x0f
 end
+=#
 
 @testset "`Rational` as lazy `/``" begin
 
