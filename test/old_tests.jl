@@ -118,15 +118,15 @@ end
     # eagerly generates intermediate representation of `union(1:3,5:7)`
     eager = bounding(UnitRange, union(1:3,5:7))
     # use specialized method for bounding unions of `UnitRange`s
-    lazy = bounding(UnitRange, @fix union(1:3,5:7))
+    lazy = bounding(UnitRange, @xquote union(1:3,5:7))
     @test eager == lazy
 
-    @test_throws MethodError bounding(UnitRange, @fix union(1:3,5:7; a_kwarg=:unsupported))
+    @test_throws MethodError bounding(UnitRange, @xquote union(1:3,5:7; a_kwarg=:unsupported))
 
     r1 = UInt64(1):UInt64(3)
     r2 = UInt64(5):UInt64(7)
     eager = bounding(UnitRange, union(r1,r2))
-    lazy = bounding(UnitRange, @fix union(r1,r2))
+    lazy = bounding(UnitRange, @xquote union(r1,r2))
     @test eager == lazy
 
 
@@ -166,7 +166,7 @@ end
     end
 
     ref = reduce(vcat, [[:a, :b, :c], [:d, :e]])
-    laz = @fix reduce(vcat, [[:a, :b, :c], [:d, :e]])
+    laz = @xquote reduce(vcat, [[:a, :b, :c], [:d, :e]])
 
     @test length(ref) == length(laz)
     for i = 1:length(ref)
@@ -213,14 +213,14 @@ end
 
 @testset "Fixed Point Numbers as lazy `/` with static denominator" begin
     # e.g. Fixed{Int8,7} from `FixedPointNumbers.jl`
-    MyQ0f7_instance = (@fix Int8(3) / Val{128}())
+    MyQ0f7_instance = (@xquote Int8(3) / Val{128}())
     MyQ0f7 = typeof(MyQ0f7_instance)
     @test MyQ0f7 === Fix{typeof(/),Tuple{Some{Int8},Val{128}},NamedTuple{(),Tuple{}}}
 
     Fixed{N,D} = Fix{typeof(/),Tuple{Some{N},Val{D}},NamedTuple{(),Tuple{}}}
     function Base.:+(a::Fixed{N,D}, b::Fixed{N,D})::Fixed{N,D} where {N, D}
         n = something(a.args[1]) + something(b.args[1])
-        return (@fix N(n) / Val{D}())
+        return (@xquote N(n) / Val{D}())
     end
 
     @test (MyQ0f7_instance + MyQ0f7_instance)() === 6/128
