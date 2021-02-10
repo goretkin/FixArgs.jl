@@ -128,8 +128,9 @@ end
     eager = bounding(UnitRange, union(r1,r2))
     lazy = bounding(UnitRange, @xquote union(r1,r2))
     @test eager == lazy
+end
 
-
+@testset "escaping and etc" begin
     is3 = fix(==, Some(3), nothing)
     @test false == @inferred is3(4)
     isnothing2 = fix(===, Some(nothing), nothing)
