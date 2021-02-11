@@ -47,7 +47,7 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - run: julia --color=yes --project -e 'using Pkg; Pkg.add(url="https://github.com/goretkin/FrankenTuples.jl.git", rev="6cc32fd")'
+      - run: julia --color=yes --project -e 'using Pkg; Pkg.add(url="https://github.com/goretkin/FrankenTuples.jl.git", rev="6cc32fd"); Pkg.instantiate()'
       - run: |
           julia --project=docs -e '
             using Pkg
