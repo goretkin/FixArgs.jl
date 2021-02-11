@@ -130,5 +130,5 @@ end
 function _kwargs_to_named_tuple(kwargs)
     all(ex -> isexpr(ex, :kw), kwargs) || error()
     all(ex -> length(ex.args) == 2, kwargs) || error()
-    NamedTuple((ex.args[1] => ex.args[2] for ex in kwargs))
+    (; (ex.args[1] => ex.args[2] for ex in kwargs)... )
 end
