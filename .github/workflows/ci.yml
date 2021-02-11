@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - '1.2'
+          # - '1.2' # Pkg.add(;url, rev) doesn't seem to exist
           - '1.5'
           - 'nightly'
         os:
