@@ -3,6 +3,7 @@ type aliases
 =#
 
 const FixNew{ARGS_IN, F, ARGS_CALL} = Lambda{ARGS_IN, Call{F, ARGS_CALL}}
+
 # define constructor consistent with type alias
 function FixNew(args_in, f, args_call)
     Lambda(args_in, Call(f, args_call))
