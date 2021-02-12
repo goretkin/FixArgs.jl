@@ -1,5 +1,5 @@
 using FixArgs: FixArgs
-using FixArgs.New: @quote_some, @xquote, relabel_args
+using FixArgs: @quote_some, @xquote, relabel_args
 using Test: @test, @test_broken, @testset, @inferred, @test_throws
 using MacroTools: @capture
 
@@ -59,24 +59,24 @@ expr_tests = [
 end
 
 @testset "@xquote and Fix1, Fix2" begin
-    @test (@xquote x -> ==(1, x)) == FixArgs.New.Fix1(==, 1)
-    @test (@xquote x -> ==(x, 1)) == FixArgs.New.Fix2(==, 1)
-    @test (@xquote x -> x == 1) == FixArgs.New.Fix2(==, 1)
-    @test (@xquote (x,) -> ==(x, 1)) == FixArgs.New.Fix2(==, 1)
-    @test (@xquote xyz -> ==(xyz, 1)) == FixArgs.New.Fix2(==, 1)
-    @test (let one = 1; @xquote x -> ==(x, one) end) == FixArgs.New.Fix2(==, 1)
-    @test (let one = 1, eq = ==; @xquote x -> eq(x, one) end) == FixArgs.New.Fix2(==, 1)
+    @test (@xquote x -> ==(1, x)) == FixArgs.Fix1(==, 1)
+    @test (@xquote x -> ==(x, 1)) == FixArgs.Fix2(==, 1)
+    @test (@xquote x -> x == 1) == FixArgs.Fix2(==, 1)
+    @test (@xquote (x,) -> ==(x, 1)) == FixArgs.Fix2(==, 1)
+    @test (@xquote xyz -> ==(xyz, 1)) == FixArgs.Fix2(==, 1)
+    @test (let one = 1; @xquote x -> ==(x, one) end) == FixArgs.Fix2(==, 1)
+    @test (let one = 1, eq = ==; @xquote x -> eq(x, one) end) == FixArgs.Fix2(==, 1)
 end
 
 @testset "compute" begin
     L = @xquote x -> ==(x, 1)
-    @test true == FixArgs.New.xapply(L, (1, ))
-    @test false == FixArgs.New.xapply(L, (2, ))
+    @test true == FixArgs.xapply(L, (1, ))
+    @test false == FixArgs.xapply(L, (2, ))
 end
 
 @testset "compute nested Lambda" begin
     L = @xquote x -> ( y -> ==(x, y) )
-    @test FixArgs.New.xapply(L, (2, )) == FixArgs.New.Fix1(==, 2)
+    @test FixArgs.xapply(L, (2, )) == FixArgs.Fix1(==, 2)
 
     Lxyz = @xquote x -> y -> z -> (x * y * z)
     @test Lxyz("a")("b")("c") == "abc"
@@ -127,11 +127,11 @@ end
 end
 
 @testset "static argument" begin
-    @test 3 === FixArgs.New.xeval(FixArgs.New.Call(Some(+), FixArgs.New.FrankenTuple((Some(1), Val(2)), NamedTuple())))
+    @test 3 === FixArgs.xeval(FixArgs.Call(Some(+), FixArgs.FrankenTuple((Some(1), Val(2)), NamedTuple())))
     frac = @xquote 1 / 2
     frac2 = @xquote 1 / 2::::S
-    @test FixArgs.New.xeval(frac) === 1 / 2
-    @test FixArgs.New.xeval(frac2) === 1 / 2
+    @test FixArgs.xeval(frac) === 1 / 2
+    @test FixArgs.xeval(frac2) === 1 / 2
     @test sizeof(frac) == 16
     @test sizeof(frac2) == 8
 end

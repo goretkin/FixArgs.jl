@@ -60,18 +60,18 @@ uneval(x::Lambda) = :(Lambda($(uneval(x.args)), $(uneval(x.body))))     # implem
 # and what happens if `Lambda` is not available in the scope of the macro definition?
 
 #= implementation 1
-julia> dump(@macroexpand FixArgs.New.@xquote (x, y) -> x + y)
+julia> dump(@macroexpand FixArgs.@xquote (x, y) -> x + y)
 Expr
   head: Symbol call
   args: Array{Any}((3,))
     1: GlobalRef
-      mod: Module FixArgs.New
+      mod: Module FixArgs
       name: Symbol Lambda
 [...]
 =#
 
 #= implementation 2
-julia> dump(@macroexpand FixArgs.New.@xquote (x, y) -> x + y)
+julia> dump(@macroexpand FixArgs.@xquote (x, y) -> x + y)
 Expr
   head: Symbol call
   args: Array{Any}((3,))
