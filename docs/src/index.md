@@ -38,18 +38,12 @@ Dispatch is not tenable with anonymous functions. Let's illustrate while moving 
 
 ```@repl BaseFix
 f1 = x -> x == 0
-```
-
-```@repl BaseFix
 f2 = Fix1(==, 0)
 ```
 
 Now define the "same" things again:
 ```@repl BaseFix
 f3 = x -> x == 0
-```
-
-```@repl BaseFix
 f4 = Fix1(==, 0)
 ```
 
@@ -68,13 +62,7 @@ A new anonymous function is always given a unique type, which allows methods to 
 ```@repl BaseFix
 foo(::typeof(f1)) = "f1"
 foo(::typeof(f3)) = "f3"
-```
-
-```@repl BaseFix
 foo(f1)
-```
-
-```@repl BaseFix
 foo(f3)
 ```
 
