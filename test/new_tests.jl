@@ -135,3 +135,38 @@ end
     @test sizeof(frac) == 16
     @test sizeof(frac2) == 8
 end
+
+@testset "xquote syntax" begin
+    # any expression head that is not anticipated is escaped.
+    # such as `tuple`, `vect`, `vcat`, `hcat`
+
+    # Here's a list of some forms:
+    # https://github.com/JuliaLang/julia/blob/ef14131db321f8f5a815dd05a5385b5b27d87d8f/doc/src/devdocs/ast.md#bracketed-forms
+
+    # other macros and functions have to deal with this too:
+    # https://github.com/JuliaLang/julia/blob/ef14131db321f8f5a815dd05a5385b5b27d87d8f/stdlib/InteractiveUtils/src/macros.jl#L136
+    # https://github.com/JuliaLang/julia/blob/ef14131db321f8f5a815dd05a5385b5b27d87d8f/base/show.jl#L1721
+
+    # and there are occasionally updates:
+    # https://github.com/JuliaLang/julia/pull/28122
+
+    tuple1 = @xquote x -> (1, x)
+    @test_broken tuple1(2) == (1, 2)
+
+    vect1 = @xquote x -> [1, x]
+    @test_broken tuple1(2) == [1, 2]
+
+    vcat1 = @xquote x -> [1; x]
+    @test_broken tuple1(2) == [1; 2]
+
+    hcat1 = @xquote x -> [1 x]
+    @test_broken tuple1(2) == [1 2]
+
+    vcat_row1 = @xquote x -> [1 x; 3 4]
+    @test_broken tuple1(2) == [1 2; 3 4]
+end
+
+@testset "@FixT errors" begin
+    @test_throws Exception macroexpand(Main, :(FixArgs.@FixT x -> x))
+    @test_throws Exception macroexpand(Main, :(FixArgs.@FixT map(x -> x, rand(10))))
+end
