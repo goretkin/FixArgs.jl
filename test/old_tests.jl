@@ -130,18 +130,6 @@ end
     @test eager == lazy
 end
 
-@testset "escaping and etc" begin
-    is3 = fix(==, Some(3), nothing)
-    @test false == @inferred is3(4)
-    isnothing2 = fix(===, Some(nothing), nothing)
-
-    @test isnothing2(nothing)
-    @test isnothing2(:notnothing) == false
-
-    b = @fix "hey" * _ * "there"
-    @test b(", you, ") == "hey, you, there"
-end
-
 @testset "lazy `reduce(vcat, ...)`" begin
     # A watered-down version of `LazyArrays.Vcat`:
     # https://github.com/JuliaArrays/LazyArrays.jl/blob/dff5924cd8b52c62a34cce16372381bb8a9e35cb/src/lazyconcat.jl#L11
@@ -220,6 +208,18 @@ end
     # and that you can do so without introducing any new type names
 end
 
+@testset "escaping and etc" begin
+    is3 = fix(==, Some(3), nothing)
+    @test false == @inferred is3(4)
+    isnothing2 = fix(===, Some(nothing), nothing)
+
+    @test isnothing2(nothing)
+    @test isnothing2(:notnothing) == false
+
+    b = @fix "hey" * _ * "there"
+    @test b(", you, ") == "hey, you, there"
+end
+
 @testset "calls and not calls" begin
     # These errors are thrown at macro expansion time.
     @test_throws Exception eval(:(@fix "not a call $(_)"))
@@ -235,30 +235,6 @@ end
     @test fs(4) == "a call 4"
     @test ft(4) == (:a_call, 4)
     @test fnt(4) ==  NamedTuple{(:a, :b)}((:a_call, 4))
-end
-
-function isinferred(f, arg_types)
-    Ts = Base.return_types(f, arg_types)
-    return length(Ts) == 1 && isconcretetype(only(Ts))
-end
-
-@testset "repeat arguments" begin
-    foo = @xquote (_1, _2, _3, _4, _5) -> tuple(_1, _2, _5, (string(_1, _3, _4)))
-    @test foo(:a, :b, "c", 1, 2.0) == (:a, :b, 2.0, "ac1")
-    @test isinferred(foo, (Symbol, Symbol, String, Int64, Float64))
-
-    # not enough args
-    @test !isinferred(foo, (Symbol, Symbol, String, Int64))
-
-    # error on extra args
-    @test_throws Exception foo(:a, :b, "c", 1, 2.0, :extra) == (:a, :b, 2.0, "ac1")
-end
-
-@testset "nested function definitions" begin
-    foo = x -> (y -> *(x, y))
-    foo1 = @xquote x -> (y -> *(x, y))
-
-    @test foo("a")("b") == foo1("a")("b")
 end
 
 using Documenter: DocMeta, doctest

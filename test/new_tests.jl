@@ -189,3 +189,27 @@ end
     @test_broken @xquote x -> isapprox(1, x; atol=3)
     @test_broken @xquote isapprox(1, 2; atol=3)
 end
+
+function isinferred(f, arg_types)
+    Ts = Base.return_types(f, arg_types)
+    return length(Ts) == 1 && isconcretetype(only(Ts))
+end
+
+@testset "repeat arguments" begin
+    foo = @xquote (_1, _2, _3, _4, _5) -> tuple(_1, _2, _5, (string(_1, _3, _4)))
+    @test foo(:a, :b, "c", 1, 2.0) == (:a, :b, 2.0, "ac1")
+    @test isinferred(foo, (Symbol, Symbol, String, Int64, Float64))
+
+    # not enough args
+    @test !isinferred(foo, (Symbol, Symbol, String, Int64))
+
+    # error on extra args
+    @test_throws Exception foo(:a, :b, "c", 1, 2.0, :extra) == (:a, :b, 2.0, "ac1")
+end
+
+@testset "nested function definitions" begin
+    foo = x -> (y -> *(x, y))
+    foo1 = @xquote x -> (y -> *(x, y))
+
+    @test foo("a")("b") == foo1("a")("b")
+end
