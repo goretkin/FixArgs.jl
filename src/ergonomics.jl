@@ -291,11 +291,8 @@ true
 
 If an argument is "static", then it is part of the type, and the value is annotated as illustrated:
 
-```jldoctest
-@xquoteT string(123::::S)
-
-# output
-
+```julia
+julia> @xquoteT string(123::::S)
 FixArgs.Call{Some{typeof(string)},FrankenTuples.FrankenTuple{Tuple{Val{123}},(),Tuple{}}}
 ```
 """
