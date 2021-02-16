@@ -94,9 +94,9 @@ This package provides a generalization of `Fix1` and `Fix2` in a few ways:
 1. A function of any positional arity can be used, and any number of its arguments can be bound, allowing the remaining arguments to be provided later.
 2. A function can have its keyword arguments bound.
 3. The function `x -> f(x, b)` is represented with types:
-   - a [`Lambda`](@ref) to represent function (`args -> body`),
-   - a [`Call`](@ref) to represent the function *call* (`f(...)` in the body.
-   - a [`ArgPos`](@ref) to represent the `x` in the body of the lambda function.
+   - a [`Lambda`](@ref) to represent function (`args -> body`)
+   - a [`Call`](@ref) to represent the function *call* (`f(...)`) in the body
+   - a [`ArgPos`](@ref) to represent the `x` in the body of the lambda function
 
 The third generalization is powerful, because it's effectively the [lambda calculus](https://en.wikipedia.org/wiki/Lambda_calculus).
 
@@ -146,7 +146,7 @@ map(f, A) = collect(Generator(f,A))
 ```
 
 
-The circularity would be broken by defining
+Breaking this circularity is possible by defining
 
 ```julia
 function iterate(gen::(@xquoteT map(::F, ::I))) where F, I
@@ -166,7 +166,7 @@ And the dispatches done on these types to enable the existing symbolic computati
 reverse(f::Filter) = Filter(f.flt, reverse(f.itr))
 ```
 
-`Base.Iterators.Flatten`, which [defines a convenience function]([https://github.com/JuliaLang/julia/blob/ef14131db321f8f5a815dd05a5385b5b27d87d8f/base/iterators.jl#L463)
+`Base.Iterators.Flatten`, which [defines a convenience function](https://github.com/JuliaLang/julia/blob/ef14131db321f8f5a815dd05a5385b5b27d87d8f/base/iterators.jl#L463)
 
 ```julia
 flatten(itr) = Flatten(itr)
