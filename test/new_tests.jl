@@ -171,6 +171,9 @@ end
 @testset "@FixT errors" begin
     @test_throws Exception macroexpand(Main, :(FixArgs.@FixT x -> x))
     @test_throws Exception macroexpand(Main, :(FixArgs.@FixT map(x -> x, rand(10))))
+
+    # should be `typeof(@xquote x -> isapprox(x, 1.0))`
+    @test_throws Exception macroexpand(Main, :(FixArgs.@FixT  x -> isapprox(x, ::Float64)))
 end
 
 @testset "@xquote escaping" begin
@@ -179,4 +182,10 @@ end
     @test fix2 isa FixArgs.Fix2
     @test !(nested isa FixArgs.Fix2)
     @test nested(sqrt) == fix2(sqrt)
+end
+
+@testset "@xquote calls with keyword arguments" begin
+    # broken, even though `fix` is working
+    @test_broken @xquote x -> isapprox(1, x; atol=3)
+    @test_broken @xquote isapprox(1, 2; atol=3)
 end
