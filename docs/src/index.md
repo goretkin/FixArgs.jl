@@ -8,12 +8,12 @@ This package began as an exploration in generalizing `Base.Fix1` and `Base.Fix2`
 These types are ways to represent a particular forms of anonymous functions.
 Let's illustrate. We'll use the `string` function in `Base`, which concatenates the string representations of its arguments:
 
-```@example
+```@repl
 string("first ", "second")
 ```
 
 Now, to construct and use the `Fix1` and `Fix2` types:
-```@example BaseFix
+```@repl BaseFix
 using Base: Fix1, Fix2
 
 f1 = Fix1(string, "one then ")
@@ -23,7 +23,7 @@ The function-call behavior of `Fix1(f, bind)` is the same as `x -> f(bind, x)`.
 
 Similarly,
 
-```@example BaseFix
+```@repl BaseFix
 f2 = Fix2(string, " before two")
 f2("one")
 ```
@@ -36,45 +36,45 @@ The key point of the `Fix1` and `Fix2` types is that methods can dispatch on
 
 Dispatch is not tenable with anonymous functions. Let's illustrate while moving to a more practical example using `==` instead of `string`.
 
-```@example BaseFix
+```@repl BaseFix
 f1 = x -> x == 0
 ```
 
-```@example BaseFix
+```@repl BaseFix
 f2 = Fix1(==, 0)
 ```
 
 Now define the "same" things again:
-```@example BaseFix
+```@repl BaseFix
 f3 = x -> x == 0
 ```
 
-```@example BaseFix
+```@repl BaseFix
 f4 = Fix1(==, 0)
 ```
 
 The types of both the `Fix1` values is the same:
-```@example BaseFix
+```@repl BaseFix
 typeof(f2) === typeof(f4)
 ```
 
 But each anonymous function definition introduces a new type with an opaque name:
-```@example BaseFix
+```@repl BaseFix
 typeof(f1), typeof(f3)
 ```
 
 A new anonymous function is always given a unique type, which allows methods to specialize on the specific anonymous function passed as an argument, but does not "permit" dispatch. To be more accurate, as far as dispatch is concerned, the type of anonymous functions is not special:
 
-```@example BaseFix
+```@repl BaseFix
 foo(::typeof(f1)) = "f1"
 foo(::typeof(f3)) = "f3"
 ```
 
-```@example BaseFix
+```@repl BaseFix
 foo(f1)
 ```
 
-```@example BaseFix
+```@repl BaseFix
 foo(f3)
 ```
 
@@ -123,7 +123,7 @@ In many domains, new types are introduced to represent this pattern.
 `Base.Generator` consists of two fields `f` and `iter`.
 This can be taken as a representation of `map(f, iter)`:
 
-```@example Iterators
+```@repl Iterators
 using FixArgs
 
 gen = let f = string, iter = 1:10
@@ -140,14 +140,14 @@ const MyGenerator{F, I} = FixArgs.Call{Some{typeof(map)}, FixArgs.FrankenTuples.
 
 That is quite unsightly, and there are quite a few internals leaking out. We can use a macro instead:
 
-```@example Iterators
+```@repl Iterators
 const MyGenerator{F, I} = @xquoteT map(::F, ::I)
 ```
 It should be made convenient to defining constructors and `show` methods that correspond with the type alias.
 
 To evaluate the call (i.e. "collect the iterator"):
 
-```@example Iterators
+```@repl Iterators
 xeval(gen)
 ```
 
