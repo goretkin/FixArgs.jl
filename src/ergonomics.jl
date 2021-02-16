@@ -267,8 +267,19 @@ function parse_type_spec(ex)
 end
 
 """
-`@fix union([1], [2])` operates on values to produce an instance, whereas
-`@xquoteT union(::Vector{Int64}, ::Vector{Int64})` produces `typeof(@fix union([1], [2]))`
+The types produced by this package are unwieldly. This macro permits a convenient syntax, e.g.
+`@xquoteT func(::Arg1Type, ::Arg2Type)`
+to represent types.
+
+```jldoctest
+let func = identity, arg = 1
+    typeof(@xquote func(arg)) == @xquoteT func(::typeof(arg))
+end
+
+# output
+
+true
+```
 """
 macro xquoteT(ex)
     Meta.isexpr(ex, :call) || throw(Base.Meta.ParseError("This macro is only implemented for call expressions. Got $ex"))

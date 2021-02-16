@@ -11,5 +11,4 @@ end
 
 ```@autodocs
 Modules = [FixArgs]
-Order   = [:function, :type]
 ```

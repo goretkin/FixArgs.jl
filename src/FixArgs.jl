@@ -3,6 +3,7 @@ module FixArgs
 # export so that Julia v1.6 type alias printing works
 # but not FixNew to not inhibit other type aliases: https://github.com/JuliaLang/julia/issues/39492
 export Fix1, Fix2
+export @xquote, @xquoteT
 
 using FrankenTuples: FrankenTuples, FrankenTuple
 
