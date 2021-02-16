@@ -181,33 +181,160 @@ What is `Rational` but lazy division on integers?
 ```julia
 julia> 1/9 * 3/2 # eager division
 0.16666666666666666
-
-julia> using FixArgs
-
-julia> (@fix 1/9) * (@fix 3/2) # lazy division
-ERROR: MethodError: no method matching *(::Fix{typeof(/),Tuple{Some{Int64},Some{Int64}},NamedTuple{(),Tuple{}}}, ::Fix{typeof(/),Tuple{Some{Int64},Some{Int64}},NamedTuple{(),Tuple{}}})
-Closest candidates are:
-  *(::Any, ::Any, ::Any, ::Any...) at operators.jl:538
-Stacktrace:
- [1] top-level scope at REPL[33]:1
-
-julia> function Base.:*( # ... Define the missing method. See test
-
-julia> (@fix 1/9) * (@fix 3/2)
-(::Fix{typeof(/),Tuple{Some{Int64},Some{Int64}},NamedTuple{(),Tuple{}}}) (generic function with 1 method)
-
-julia> ans.args
-(Some(1), Some(6))
-
-julia> 1//9 * 3//2 # use Rational
-1//6
 ```
 
+```@repl Rational
+using FixArgs
 
-## Pure-imaginary type
-In fact, the lazy call might not be valid to begin with.
+(@xquote 1/9) * (@xquote 3/2)
+```
 
-## `Base.Complex`
+Of course, we have to do some more work.
+
+```@example Rational
+using Base: divgcd
+
+function Base.:*(
+        x::(@xquoteT ::T / ::T),
+        y::(@xquoteT ::T / ::T),
+        ) where {T}
+    xn, yd = divgcd(something(x.args[1]), something(y.args[2]))
+    xd, yn = divgcd(something(x.args[2]), something(y.args[1]))
+    ret = @xquote $(xn * yn) / $(xd * yd) # TODO use `unsafe_rational` and `checked_mul`
+    ret
+end
+```
+
+Now, try again:
+
+```@repl Rational
+q = (@xquote 1/9) * (@xquote 3/2)
+map(xeval, q.args) # make numerator and denominator plainly visible
+```
+
+compare with using `//` to construct a `Base.Rational`:
+```@repl Rational
+1//9 * 3//2
+```
+
+Finally, because we have encoded the relationship between this "new" rational type, and `/`, we can do:
+```@repl Rational
+xeval(q)
+```
+
+We could define an alias:
+```@example Rational
+const MyRational{T} = @xquoteT(::T / ::T)
+```
+
+which would also enforce the same type for both the numerator and denominator, as is the case of `Base.Rational`.
+
+```@repl Rational
+sizeof(MyRational{Int32})
+```
+
+Occasionally, a user might find this to be a limitation, yet they would still like to use some of the generic algorithms that might apply.
+
+The fields of `Base.Rational` are `num` and `den`. They have to be named since that's all that gives the fields any meaning at all.
+In our type, however, instead of naming the fields they can be distinguished by the role they play with respect to the `/` function.
+
+## Fixed-Point Numbers and "static" arguments
+A fixed-point number is just a rational number with a specified denominator.
+If we have a large array of fixed-point numbers with the same denominator, we certainly do not want to store the denominator repeatedly.
+
+And we want to ensure constant propagation happens, too.
+
+So we can "bake in" some values (`Base.isbitstype`) into the type of `Call` itself!
+
+In other words, what is a fixed-point number but lazy division with a static denominator?
+Here is an example that models `Fixed{Int8,7}` from [`FixedPointNumbers.jl`](https://github.com/JuliaMath/FixedPointNumbers.jl).
+The macros use the notation `V::::S` to mark an argument `V` as "static".
+Also note the use of `$` to escape subexpressions.
+
+```@repl FixedPoint
+using FixArgs
+
+MyQ0f7(x) = (@xquote $(Int8(x)) / 128::::S)     # hide
+MyFixed{N,D} = @xquoteT ::N / D::::S              # hide
+MyFixed{Int8, 128} === typeof(MyQ0f7(3))
+
+function Base.:+(a::MyFixed{N,D}, b::MyFixed{N,D})::MyFixed{N,D} where {N, D}
+    n = something(a.args[1]) + something(b.args[1])
+    return (@xquote $(N(n)) / D::::S)
+end
+
+xeval(MyQ0f7(3) + MyQ0f7(2)) === 5/128
+```
+
+```@repl FixedPoint
+sizeof(MyFixed)
+sizeof(Int8)
+```
+
+And the generated code appears to be equivalent between
+
+```julia
+using FixedPointNumbers
+look_inside_1(x, y) = reinterpret(Fixed{Int8, 7}, Int8(x)) + reinterpret(Fixed{Int8, 7}, Int8(y))
+```
+
+and
+```julia
+look_inside_2(x, y) = MyQ0f7(x) + MyQ0f7(y)
+```
+
+## Pure-imaginary type and `Base.Complex`
+Now that we can make some arguments static, we can introduce a meaningful example where the lazy call might not be valid to begin with.
+You can define a type such that `xeval` raises `MethodError` and still represent the computation symbolically.
+The Julia ecosystem goes to great lengths to find the right generic functions and to ensure that all methods defined on generic functions are semantically compatible.
+This effort enables generic programming and interoperability.
+You can define a type `A` in terms of a function `f` and a type `B` even if it may not make sense to define a new method of `f` on `B`.
+
+Here is an over-the-top example:
+
+```@repl Imaginary
+using FixArgs
+
+struct ImaginaryUnit end    # if we want to be really cute, can do `@xquote sqrt((-1)::::S)`
+const Imaginary{T} = @xquoteT ::T * ::ImaginaryUnit
+Imaginary(x) = @xquote x * $(ImaginaryUnit())   # note escaping
+```
+
+note that if we assume we have no `Base.Complex` or anything like it, we don't have a way to further evaluate:
+```@repl Imaginary
+xeval(Imaginary(3))
+```
+
+We represented pure imaginary numbers as lazy multiplication of numbers and a singleton type `ImaginaryUnit`, and it is basically as if we had defined
+
+```
+struct Imaginary{T}
+    _::T
+end
+```
+
+Let's just go ahead and represent complex numbers too:
+
+```@repl Imaginary
+# const MyComplex{R, I} = @xquoteT ::R + (::I * ::ImaginaryUnit) # TODO this macro doesn't work
+MyComplex(r, i) = @xquote r + i * $(ImaginaryUnit())
+```
+
+Note this monster of a type has the same size as `Base.Complex`:
+
+```@repl Imaginary
+sizeof(Complex(1, 2))
+sizeof(MyComplex(1, 2))
+```
+
+and layout too:
+```@repl Imaginary
+reinterpret(Int64, [Complex(1, 2)])
+reinterpret(Int64, [MyComplex(1, 2)])
+```
+
+Of course, there are many different types that would all be mathematically equivalent by swapping the arguments to `+` or `*`.
+Note that swapping the arguments to `+` would give a different memory layout.
 
 
 ```@meta
