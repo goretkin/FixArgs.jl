@@ -336,6 +336,51 @@ reinterpret(Int64, [MyComplex(1, 2)])
 Of course, there are many different types that would all be mathematically equivalent by swapping the arguments to `+` or `*`.
 Note that swapping the arguments to `+` would give a different memory layout.
 
+## Faster set operations by deferring computation
+Suppose we have some generic function to return bounds on set-like objects.
+
+```@example Sets
+
+"""Produce the unique best bound, in the sense that `x ∈ input` implies `x ∈ result`"""
+function bounding#=(result_type, input)=# end
+```
+
+The objects may be shapes in space, and `result_type` could correspond to important categories of bounding volumes.
+To keep things simple, let us deal with sets of integers as represented by e.g. `Vector` and `UnitRange`.
+
+```@repl Sets
+bounding(::Type{UnitRange}, v::Vector{<:Integer}) = UnitRange(extrema(v)...)
+
+bounding(UnitRange, [1, 3, 5])
+```
+
+Consider the following computation:
+```@repl Sets
+eager = bounding(UnitRange, union(1:3, 5:7))
+```
+
+It might be worth deferring that `union` call.
+It produces a representation with a size linear in the number of elements, whereas a deferred computation is  representable in constant size.
+
+```@example Sets
+using FixArgs
+
+function bounding(
+        ::Type{UnitRange},
+        _union::(@xquoteT union(::UnitRange{T}, ::UnitRange{T}))
+        ) where T <: Integer
+    (a, b) = something.(_union.args)
+    UnitRange(min(minimum(a), minimum(b)), max(maximum(a), maximum(b)))
+end
+```
+
+Now to use our specialized method for bounding unions of `UnitRanges`, we simply defer one part of the previous computation:
+```@repl Sets
+lazy = bounding(UnitRange, @xquote union($(1:3),$(5:7)))
+eager == lazy
+```
+
+# API
 
 ```@meta
 CurrentModule = FixArgs
