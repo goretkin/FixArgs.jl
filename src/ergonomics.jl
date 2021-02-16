@@ -268,9 +268,9 @@ end
 
 """
 `@fix union([1], [2])` operates on values to produce an instance, whereas
-`@FixT union(::Vector{Int64}, ::Vector{Int64})` produces `typeof(@fix union([1], [2]))`
+`@xquoteT union(::Vector{Int64}, ::Vector{Int64})` produces `typeof(@fix union([1], [2]))`
 """
-macro FixT(ex)
+macro xquoteT(ex)
     Meta.isexpr(ex, :call) || throw(Base.Meta.ParseError("This macro is only implemented for call expressions. Got $ex"))
     try
         f = ex.args[1]

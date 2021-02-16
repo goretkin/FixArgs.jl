@@ -1,4 +1,4 @@
-using FixArgs: FixArgs, @FixT
+using FixArgs: FixArgs, @xquoteT
 using FixArgs: @xquote, xeval, fix, @fix
 using Test: @test, @test_broken, @testset, @inferred, @test_throws
 
@@ -72,8 +72,8 @@ end
     using Base: divgcd
 
     function Base.:*(
-            x::(@FixT ::T / ::T),
-            y::(@FixT ::T / ::T),
+            x::(@xquoteT ::T / ::T),
+            y::(@xquoteT ::T / ::T),
            ) where {T}
         xn, yd = divgcd(something(x.args[1]), something(y.args[2]))
         xd, yn = divgcd(something(x.args[2]), something(y.args[1]))
@@ -86,7 +86,7 @@ end
     half = (@xquote $(UInt64(1)) / $(UInt64(3))) * (@xquote $(UInt64(3)) / $(UInt64(2)))
     @test xeval(half) == 0.5
 
-    @test typeof(@xquote union($([1]), $([2]))) == @FixT union(::Vector{Int64}, ::Vector{Int64})
+    @test typeof(@xquote union($([1]), $([2]))) == @xquoteT union(::Vector{Int64}, ::Vector{Int64})
 end
 
 @testset "lazy `union`" begin
@@ -109,7 +109,7 @@ end
 
     function bounding(
             ::Type{>:UnitRange},
-            _union::(@FixT union(::UnitRange{T}, ::UnitRange{T}))
+            _union::(@xquoteT union(::UnitRange{T}, ::UnitRange{T}))
            ) where T <: Integer
         (a, b) = something.(_union.args)
         UnitRange(min(minimum(a), minimum(b)), max(maximum(a), maximum(b)))
@@ -147,8 +147,8 @@ end
     # https://github.com/JuliaArrays/LazyArrays.jl/blob/dff5924cd8b52c62a34cce16372381bb8a9e35cb/src/lazyconcat.jl#L11
 
     # TODO generalie to `AbstractVector`
-    # T_reduce_vcat_vector{T} = (@FixT reduce(::typeof(vcat), ::AbstractVector{<:AbstractVector{T}}))
-    T_reduce_vcat_vector{T} = (@FixT reduce(::typeof(vcat), ::Vector{Vector{T}}))
+    # T_reduce_vcat_vector{T} = (@xquoteT reduce(::typeof(vcat), ::AbstractVector{<:AbstractVector{T}}))
+    T_reduce_vcat_vector{T} = (@xquoteT reduce(::typeof(vcat), ::Vector{Vector{T}}))
 
     _vec_of_vec(reduce_vcat) = something(reduce_vcat.args[2])
 
@@ -179,9 +179,9 @@ end
     # e.g. Fixed{Int8,7} from `FixedPointNumbers.jl`
     MyQ0f7_instance = (@xquote $(Int8(3)) / 128::::S)
     MyQ0f7 = typeof(MyQ0f7_instance)
-    @test MyQ0f7 === (@FixT ::Int8 / 128::::S)
+    @test MyQ0f7 === (@xquoteT ::Int8 / 128::::S)
 
-    Fixed{N,D} = @FixT ::N / D::::S
+    Fixed{N,D} = @xquoteT ::N / D::::S
     function Base.:+(a::Fixed{N,D}, b::Fixed{N,D})::Fixed{N,D} where {N, D}
         n = something(a.args[1]) + something(b.args[1])
         return (@xquote $(N(n)) / D::::S)

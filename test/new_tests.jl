@@ -120,9 +120,9 @@ end
 end
 
 @testset "type macro" begin
-    @test (FixArgs.@FixT string(::Int64)) === typeof(@xquote string(3))
+    @test (FixArgs.@xquoteT string(::Int64)) === typeof(@xquote string(3))
     v = @xquote string(1, 2::::S, (:three), (:four)::::S)
-    t = FixArgs.@FixT string(::Int64, 2::::S, ::Symbol, (:four)::::S)
+    t = FixArgs.@xquoteT string(::Int64, 2::::S, ::Symbol, (:four)::::S)
     @test t === typeof(v)
 end
 
@@ -168,12 +168,12 @@ end
     @test_throws Exception FixArgs.@xquote x -> x.a
 end
 
-@testset "@FixT errors" begin
-    @test_throws Exception macroexpand(Main, :(FixArgs.@FixT x -> x))
-    @test_throws Exception macroexpand(Main, :(FixArgs.@FixT map(x -> x, rand(10))))
+@testset "@xquoteT errors" begin
+    @test_throws Exception macroexpand(Main, :(FixArgs.@xquoteT x -> x))
+    @test_throws Exception macroexpand(Main, :(FixArgs.@xquoteT map(x -> x, rand(10))))
 
     # should be `typeof(@xquote x -> isapprox(x, 1.0))`
-    @test_throws Exception macroexpand(Main, :(FixArgs.@FixT  x -> isapprox(x, ::Float64)))
+    @test_throws Exception macroexpand(Main, :(FixArgs.@xquoteT  x -> isapprox(x, ::Float64)))
 end
 
 @testset "@xquote escaping" begin
