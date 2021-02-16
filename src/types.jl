@@ -1,11 +1,12 @@
 """
-Represent the arity of a function (i.e. how many inputs it takes)
+
+Represent the [arity](https://en.wikipedia.org/wiki/Arity) of a [`Lambda`](@ref).
+
+Currently, only represents a fixed number of positional arguments, but may be generalized to include optional and keyword arguments.
 
 `P` is 0, 1, 2, ...
 `KW` is always `NoKeywordArguments`, and may be extended in the future.
 """
-# both `P` and `KW` may be extended in the future to allow default arguments
-# (this could become a very generalized notion of function arity)
 struct Arity{P, KW}
 end
 
@@ -15,8 +16,9 @@ const NoKeywordArguments = Nothing
 function Arity(p_arity, kw_arity = NoKeywordArguments)
     return Arity{p_arity, NoKeywordArguments}()
 end
+
 """
-Represent the formal parameters of "this" function.
+Within the `body` of a [`Lambda`](@ref), represent a formal positional parameter of that[`Lambda`](@ref).
 """
 struct ArgPos{N}
 end
@@ -24,10 +26,10 @@ end
 ArgPos(i) = ArgPos{i}()
 
 """
-Nest `ArgPos` in `ParentScope`s to represent a reference to the formal parameters of a "parent" function.
+Nest [`ArgPos`](@ref) in [`ParentScope`](@ref)s to represent a reference to the formal parameters of a "parent" function.
 Forms a unary representation.
 
-Related: https://en.wikipedia.org/wiki/De_Bruijn_index
+Related: [De Bruijn indices]https://en.wikipedia.org/wiki/De_Bruijn_index
 """
 struct ParentScope{T}
     _::T
@@ -39,11 +41,17 @@ function arg_pos(i, p)
     ParentScope(arg_pos(i, p - 1))
 end
 
+"""
+A lambda expression "args -> body"
+"""
 struct Lambda{A, B}
     args::A
     body::B
 end
 
+"""
+A call "f(args...)". `args` may represent both positional and keyword arguments.
+"""
 struct Call{F, A}
     f::F
     args::A

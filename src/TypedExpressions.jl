@@ -1,4 +1,9 @@
 """
+Roughly mirror `Base.Expr`, except that the the head of the expression (encoded in the `head` field)
+can be dispatched on.
+
+This is only used in an intermediate representation of this package.
+
 Note that `Expr` and `TypedExpr` are constructed slightly differently.
 Each argument of an `Expr` is an argument to `Expr`, whereas
 all arguments of a `TypedExpr` are passed as one argument (a tuple) to `TypedExpr`
@@ -51,6 +56,6 @@ lc_expr(expr::TypedExpr{Val{:tuple}, X}) where {X} = map(lc_expr, expr.args)
 lc_expr(expr::TypedExpr{Val{:escape}, X}) where {X} = inv_typed_expr(expr)
 
 """
-Lambda-Call expression
+Convert a `::TypedExpr` to a Lambda-Call expression
 """
 lc_expr(x) = x

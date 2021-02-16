@@ -1,4 +1,6 @@
 """
+Given a value, produce an expression that when `eval`'d produces the value.
+
 e.g.
 
 ```julia
@@ -8,6 +10,10 @@ julia> eval(uneval(Expr(:my_call, :arg1, :arg2)))
 julia> eval(eval(uneval(:(sqrt(9)))))
 3.0
 ```
+
+This function is used to return expressions from this package's macros.
+This is likely not a well-posed problem to begin with.
+[Related issue.](https://github.com/JuliaLang/julia/issues/33260)
 
 Note the special case for `:(esc(x))`.
 """

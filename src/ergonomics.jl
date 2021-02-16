@@ -96,11 +96,12 @@ function xescape(x, annotation::Symbol)
     error("unexpected annotation: $(annotation)")
 end
 
-""""
+#=
 Should parse these
 `[:((a::b)::c), :(a::b), :(a::::c), :a, :(::b::c), :(::b), :(::::c)]`
 with pattern of `nothing`s, if padded on the right to be 3-tuples, counting in binary from 7 to 1
-"""
+TODO make a test
+=#
 function _parse_double_colon(ex)
     # the splatting on the recursive calls makes different groupings produce the same result:
     # e.g. `:((a::b)::c)` and `:(a::(b::c))`
@@ -141,7 +142,9 @@ function escape_all_but(ex, apply = esc ∘ xescape_expr)
 end
 
 """
-e.g.
+This macro is used to debug and introspect the escaping behavior of [`@xquote`](@ref)
+
+```julia
 julia> dump(let x = 9
        @xquote sqrt(x)
        end)
@@ -150,6 +153,7 @@ Expr
     args: Array{Any}((2,))
         1: sqrt (function of type typeof(sqrt))
         2: Int64 9
+```
 """
 macro quote_some(ex)
     uneval(escape_all_but(ex, esc))
@@ -173,6 +177,9 @@ function _xquote(ex)
     return value
 end
 
+"""
+Transform julia syntax into a [`Lambda`](@ref)-[`Call`](@ref) expression.
+"""
 macro xquote(ex)
     value = _xquote(ex)
     uneval(value) # note: uneval handles `Expr(:escape, ...)` specially.
@@ -240,8 +247,9 @@ function escape_arg(ex)
 end
 
 """
-`@fix f(_,b)` macroexpands to `fix(f, nothing, Some(b))`
+A convenience macro that implements the syntax of [this PR](https://github.com/JuliaLang/julia/pull/24990)
 
+`@fix f(_, b)` is the equivalent of `x -> f(x, b)`
 """
 macro fix(call)
     if !Meta.isexpr(call, :call)
@@ -279,6 +287,16 @@ end
 # output
 
 true
+```
+
+If an argument is "static", then it is part of the type, and the value is annotated as illustrated:
+
+```jldoctest
+@xquoteT string(123::::S)
+
+# output
+
+FixArgs.Call{Some{typeof(string)},FrankenTuples.FrankenTuple{Tuple{Val{123}},(),Tuple{}}}
 ```
 """
 macro xquoteT(ex)

@@ -1,6 +1,6 @@
 """
 terms are evaluated with respect to a `Context`
-A `Context` is an associations between bound variables and values, and they may be nested (`parent`).
+A `Context` is an associations between bound variables and values, and they may be nested (via the `parent` field).
 """
 struct Context{E, P}
     this::E
@@ -71,6 +71,11 @@ function xeval(c::Call, ctx::Context{Nothing, P}) where P
     )
 end
 
+"""
+evaluate a Lambda-Call expression
+
+Currently only works on [`Call`](@ref) expressions.
+"""
 xeval(c::Call) = xeval(c, Context(Context(nothing, nothing), nothing))
 
 function check_arity(f::Lambda{Arity{P, NoKeywordArguments}, B}, args) where {P, B}
@@ -83,6 +88,9 @@ end
 # e.g. with default arguments
 _ctx_this(args_formal::Arity, args_actual) = args_actual
 
+"""
+apply a [`Lambda`](@ref) expression to arguments.
+"""
 function xapply(f::Lambda, args, ctx_parent=nothing)
     check_arity(f, args)
     xeval(f.body, Context(_ctx_this(f.args, args), ctx_parent))
