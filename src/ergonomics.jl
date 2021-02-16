@@ -271,8 +271,8 @@ end
 `@FixT union(::Vector{Int64}, ::Vector{Int64})` produces `typeof(@fix union([1], [2]))`
 """
 macro FixT(ex)
+    Meta.isexpr(ex, :call) || throw(Base.Meta.ParseError("This macro is only implemented for call expressions. Got $ex"))
     try
-        Meta.isexpr(ex, :call) || throw(Base.Meta.ParseError("expected a call, got $ex"))
         f = ex.args[1]
         arg_types = map(parse_type_spec, ex.args[2:end])
         arg_types_wrapped = map(((ex, wrap),) -> :($(wrap){$(esc(ex))}), arg_types)
