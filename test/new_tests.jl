@@ -164,9 +164,19 @@ end
 
     vcat_row1 = @xquote x -> [1 x; 3 4]
     @test_broken tuple1(2) == [1 2; 3 4]
+
+    @test_throws Exception FixArgs.@xquote x -> x.a
 end
 
 @testset "@FixT errors" begin
     @test_throws Exception macroexpand(Main, :(FixArgs.@FixT x -> x))
     @test_throws Exception macroexpand(Main, :(FixArgs.@FixT map(x -> x, rand(10))))
+end
+
+@testset "@xquote escaping" begin
+    nested = @xquote x -> map(x, Base.OneTo(3))
+    fix2 = @xquote x -> map(x, $(Base.OneTo(3)))
+    @test fix2 isa FixArgs.Fix2
+    @test !(nested isa FixArgs.Fix2)
+    @test nested(sqrt) == fix2(sqrt)
 end
