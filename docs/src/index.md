@@ -72,11 +72,11 @@ But really we'd like to use a type that is less opaque and furthermore is "struc
 Where is it useful to dispatch on these special functions?
 Because `Base` [does not export](https://github.com/JuliaLang/julia/issues/36554) and
 [does not document](https://github.com/JuliaLang/julia/pull/36094) these types,
-there aren't methods [in the Julia ecosystem](https://juliahub.com/ui/RepoSearch?q=%3A%3A%28Base%5C.%29%3FFix%5B12%5D&r=true).
+there aren't many methods [in the Julia ecosystem](https://juliahub.com/ui/RepoSearch?q=%3A%3A%28Base%5C.%29%3FFix%5B12%5D&r=true).
 
 But these types are constructed with, for example, `==(3)` or `in([1, 2, 3])`.
 A type like these is useful as a predicate to pass to higher-order functions, e.g. `findfirst(==(3), some_array)` to find the first element that equals `3`.
-Brevity asside, these types are useful to define more efficient methods of generic higher-order functions.
+Brevity aside, these types are useful to define more efficient methods of generic higher-order functions.
 For example, take [a specific method of the `findfirst` function](https://github.com/JuliaLang/julia/blob/1f9e8bdbcf0ded6f1386f9329a284366dbb56120/base/array.jl#L1878-L1879):
 
 ```julia
@@ -235,16 +235,17 @@ sizeof(MyRational{Int32})
 
 Occasionally, a user might find this to be a limitation, yet they would still like to use some of the generic algorithms that might apply.
 
-The fields of `Base.Rational` are `num` and `den`. They have to be named since that's all that gives the fields any meaning at all.
-In our type, however, instead of naming the fields they can be distinguished by the role they play with respect to the `/` function.
+The fields of `Base.Rational` are `num` and `den`.
+They have to be named since there is nothing else that gives the fields any meaning at all.
+In our type, however, they can be distinguished by the role they play with respect to the `/` function.
 
 ## Fixed-Point Numbers and "static" arguments
 A fixed-point number is just a rational number with a specified denominator.
 If we have a large array of fixed-point numbers with the same denominator, we certainly do not want to store the denominator repeatedly.
 
-And we want to ensure constant propagation happens, too.
+And we also want to efficient code to be generated for arithmetic.
 
-So we can "bake in" some values (`Base.isbitstype`) into the type of `Call` itself!
+So we can "bake in" some values (see `Base.isbitstype`) into the type of `Call` itself!
 
 In other words, what is a fixed-point number but lazy division with a static denominator?
 Here is an example that models `Fixed{Int8,7}` from [`FixedPointNumbers.jl`](https://github.com/JuliaMath/FixedPointNumbers.jl).
@@ -267,7 +268,7 @@ xeval(MyQ0f7(3) + MyQ0f7(2)) === 5/128
 ```
 
 ```@repl FixedPoint
-sizeof(MyFixed)
+sizeof(MyFixed{Int8, 128})
 sizeof(Int8)
 ```
 
@@ -286,8 +287,6 @@ look_inside_2(x, y) = MyQ0f7(x) + MyQ0f7(y)
 ## Pure-imaginary type and `Base.Complex`
 Now that we can make some arguments static, we can introduce a meaningful example where the lazy call might not be valid to begin with.
 You can define a type such that `xeval` raises `MethodError` and still represent the computation symbolically.
-The Julia ecosystem goes to great lengths to find the right generic functions and to ensure that all methods defined on generic functions are semantically compatible.
-This effort enables generic programming and interoperability.
 You can define a type `A` in terms of a function `f` and a type `B` even if it may not make sense to define a new method of `f` on `B`.
 
 Here is an over-the-top example:
@@ -327,7 +326,7 @@ sizeof(Complex(1, 2))
 sizeof(MyComplex(1, 2))
 ```
 
-and layout too:
+and the same layout too:
 ```@repl Imaginary
 reinterpret(Int64, [Complex(1, 2)])
 reinterpret(Int64, [MyComplex(1, 2)])
