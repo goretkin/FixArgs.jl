@@ -523,6 +523,7 @@ but going forward, types that wish to hook into this functionality would define 
 ## Related Patterns and Possible Applications:
 
 [Base.Broadcast.Broadcasted](https://github.com/JuliaLang/julia/blob/d06c2a97be3f643d403c4069955e135823ff9fd0/base/broadcast.jl#L152-L173) is like [`Call`](@ref) with extra information `Style` and `axes::Axes`.
+`materialize` is like `xeval`.
 There's more information in the [manual](https://docs.julialang.org/en/v1/manual/interfaces/#extending-in-place-broadcast).
 
 [Base.Generator](https://github.com/JuliaLang/julia/blob/676ccf4eaa9b6e6c6a53f75abb4bf3e1a2457426/base/generator.jl#L3-L34), as already discussed.
@@ -548,7 +549,7 @@ aos_eager = map(NamedTuple{(:a, :b)} ∘ tuple, soa.a, soa.b)
 <https://discourse.julialang.org/t/approximating-non-standard-evaluation-like-in-r-e-g-for-plot-labels/41889/10>
 
 ### nominal vs structural fields
-[https://github.com/JuliaLang/julia/pull/37517/files]
+<https://github.com/JuliaLang/julia/pull/37517/files>
 Instead of field names `inner` and `outer`, the arguments can be distinguished by the role they play with respect to the function `∘`.
 
 What if `∘` itself is defined as `∘(a, b) = @xquote a ∘ b`?
