@@ -15,7 +15,7 @@ xeval(a::ArgPos{i}, ctx::Nothing) where {i} = a
 
 # also just one of these two.
 xeval(a::Some, ctx::Context) = something(a)
-xeval(a::Some, ctx::Nothing) = something(a)
+xeval(a::Some, ctx::Nothing=nothing) = something(a)
 
 xeval(a::Val{T}, ctx) where T = T
 
