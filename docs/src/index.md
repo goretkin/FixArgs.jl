@@ -379,7 +379,183 @@ lazy = bounding(UnitRange, @xquote union($(1:3),$(5:7)))
 eager == lazy
 ```
 
-# API
+## Ergonomics and Syntax
+Ideally, this package would support exactly the syntax that Julia supports.
+However, it is a bit challenging not being able to hook into lowering exactly.
+- <https://docs.julialang.org/en/v1/devdocs/ast/#Bracketed-forms>
+- <https://github.com/JuliaLang/julia/pull/32201>
+
+Anonymous function syntax is still under discussion:
+- <https://github.com/JuliaLang/julia/issues/38713>
+- <https://github.com/JuliaLang/julia/pull/24990>
+
+There are packages that define anonymous function syntax, and it would be nice to ensure that they compose with e.g. `@xquote`.
+- <https://c42f.github.io/Underscores.jl/stable/#Reference-1>
+
+# Philosophy
+## Names
+(see also [nominative and structural type systems](https://en.wikipedia.org/wiki/Structural_type_system))
+
+The Julia ecosystem goes to great lengths to find the right generic functions and to ensure that all methods defined on generic functions are semantically compatible.
+This effort enables generic programming and interoperability.
+Much care goes into naming these functions and deciding their generic meaning, and it makes sense to reuse those names when possible,
+instead of creating a new name.
+
+One possible advantage of using compositional names for types is that two packages can declare methods on the same type without knowing about each other,
+as long as both packages know about the constituents of the composition.
+There may be situations in which using a compositional name is a better strategy than trying to establish a "FooBase" package.
+
+It is certainly possible to go overboard, however.
+## Type Piracy
+The Julia manual discusses [not overloading methods on container types](https://docs.julialang.org/en/v1/manual/style-guide/#Don't-overload-methods-of-base-container-types) defined by others ([hashed](https://github.com/JuliaLang/julia/blob/ef3c20d49ad96d5ce1aa24f5d0e0766c64283f28/doc/src/manual/style-guide.md#dont-overload-methods-of-base-container-types)).
+
+Arguably [`Call`](@ref) can be seen as a container type, but the whole purpose of it is for methods to be defined on it.
+As far as type piracy is concerned, e.g.  `@xquoteT ::Int64 / ::Int64`  is equivalent to using `Rational{Int64}` since in both cases, all types are owned by `Base` (assuming `Call`, `Lambda`, etc. is not owned by your package (module) either). In this example, the types are `typeof(/)` and `Int64`.
+
+For a function owned by your package, e.g. `my_foo`, by all means define `my_foo(::(@xquoteT ::Int64 / ::Int64))`.
+
+For a function not owned your package, e.g. `Base.:*`, to avoid type piracy, `*` should be defined by a package that owns at least one of the constituent types, e.g.
+- `Base.:*(::(@xquote MyFunction(::NotMyType))`
+- `Base.:*(::(@xquote NotMyFunction(::MyType))`
+- `Base.:*(::(@xquote MyFunction(::MyType))`
+
+If it is controversial what `f(::(@xquoteT func(::A, ::B)` should mean, then it is likely worth defining a new type instead of using this package.
+
+If there are multiple functions that apply to the fields of a struct, as in:
+
+```julia
+struct MyType{T1, T2}
+    arg1::T1
+    arg2::T2
+end
+
+f1(t::MyType) = *(t.arg1, t.arg2)
+f2(t::MyType) = +(t.arg1, t.arg2)
+```
+
+Then it also seems like type would also not be a good candidate to be replaced with a `Call`. Which of `*` or `+` would one choose?
+
+# More examples
+## Types of geometry primitives from scratch
+What is better?
+```julia
+struct Disc{R, C}
+    radius::R
+    center::C
+end
+```
+
+or
+
+```julia
+using LinearAlgebra: norm
+Disc(r, c) = @xquote x -> norm(x - c) ≤ r
+```
+
+Honestly, I don't know. I imagine there is a trade-off.
+But consider a situation where you'd like to distinguish between the disc with boundary, disc without boundary, and just the boundary (a circle).
+Those distinctions are as simple as `≤`, `<`, and `==`.
+You might more accurately call the struct above `DiscWithBoundary`, and introduce `DiscWithoutBoundary` and `Circle`.
+Or instead you might use a convention that all the regions are closed sets and introduce wrapper types `WithoutBoundary` and `OnlyBoundary`.
+In both cases, there's a lot of names to choose...
+
+## A way to avoid naming a new method
+Computing the square norm of a vector can usually be done more efficiently than computing the norm and then computing the square.
+
+```@repl NormSquared
+using FixArgs
+using LinearAlgebra: norm, norm_sqr
+vec = [1, 1]
+```
+
+instead of writing
+```@repl NormSquared
+norm_sqr(vec)
+```
+
+maybe you would rather write
+
+```@repl NormSquared
+xeval(@xquote norm(vec)^2::::S)
+```
+
+Well, perhaps better with an alternative macro that applies `::::S` to any `isbitstype` literals, and also does `xeval`.
+```
+@a_good_short_name norm(vec)^2
+```
+Whatever owns `norm` can add a new method to `xeval` to detect this form and use the more efficient method.
+
+```julia
+xeval(c::(@xquoteT norm(::T)^2::::S)) where T = norm_sqr(c.args[1].args[1])
+```
+
+This is different from having a package define its own macro.
+This would be one macro that can be hooked into by defining new methods on `xeval`.
+
+## Alternative to `Base.literal_pow`
+```@repl
+Meta.@lower x^2
+```
+
+Could instead lower to roughly
+```
+%1 = @xquote x^(2::::S) # i.e. something roughly like `Call(^, x, Val(2))`
+%2 = xeval(%1)
+```
+
+`xeval` could call `Base.literal_pow` for [backwards compatibility](https://juliahub.com/ui/CodeSearch?q=literal_pow&u=define&t=all;):
+
+```@repl LiteralPow
+using FixArgs
+function FixArgs.xeval(x::(@xquoteT (::B)^(E::::S))) where {B, E}
+    println("I was called")
+    base = xeval(x.args[1])
+    Base.literal_pow(^, base, Val(E))
+end
+
+let x = 3
+    xeval(@xquote x^(2::::S))
+end
+```
+
+but going forward, types that wish to hook into this functionality would define a method on `xeval` directly.
+
+## Related Patterns and Possible Applications:
+
+[Base.Broadcast.Broadcasted](https://github.com/JuliaLang/julia/blob/d06c2a97be3f643d403c4069955e135823ff9fd0/base/broadcast.jl#L152-L173) is like [`Call`](@ref) with extra information `Style` and `axes::Axes`.
+There's more information in the [manual](https://docs.julialang.org/en/v1/manual/interfaces/#extending-in-place-broadcast).
+
+[Base.Generator](https://github.com/JuliaLang/julia/blob/676ccf4eaa9b6e6c6a53f75abb4bf3e1a2457426/base/generator.jl#L3-L34), as already discussed.
+
+
+### partial application with keyword arguments
+[Definition](https://github.com/JuliaLang/julia/blob/ce5bd1c3dadcc7c733508a19a4b692b744d59a3d/base/floatfuncs.jl#L288)
+```julia
+isapprox(y; kwargs...) = x -> isapprox(x, y; kwargs...)
+```
+
+probably would use `Base.Fix2` if it also supported keyword arguments. All other docstrings with "Create a function" do.
+
+### array-of-struct and struct-of-array representations
+[StructArrays.jl](https://github.com/JuliaArrays/StructArrays.jl)
+```@example
+
+soa = (a=[1,2,3], b=[10, 20, 30])
+aos_eager = map(NamedTuple{(:a, :b)} ∘ tuple, soa.a, soa.b)
+```
+
+### non-standard evaluation
+<https://discourse.julialang.org/t/approximating-non-standard-evaluation-like-in-r-e-g-for-plot-labels/41889/10>
+
+### nominal vs structural fields
+[https://github.com/JuliaLang/julia/pull/37517/files]
+Instead of field names `inner` and `outer`, the arguments can be distinguished by the role they play with respect to the function `∘`.
+
+What if `∘` itself is defined as `∘(a, b) = @xquote a ∘ b`?
+Then define function without methods: `function ∘ end`
+
+
+# API and internals
 
 ```@meta
 CurrentModule = FixArgs
