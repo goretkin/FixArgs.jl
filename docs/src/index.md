@@ -555,6 +555,14 @@ Instead of field names `inner` and `outer`, the arguments can be distinguished b
 What if `∘` itself is defined as `∘(a, b) = @xquote a ∘ b`?
 Then define function without methods: `function ∘ end`
 
+# Concerns
+The poor compiler...
+
+The poor user trying to understand the error message...
+
+Method ambiguities
+
+Unifying too many things can lead to too much coupling.
 
 # API and internals
 
