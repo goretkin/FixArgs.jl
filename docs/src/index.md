@@ -3,10 +3,29 @@
 ```@contents
 Depth = 3
 ```
-# Introduction
+
+# Motivation
 This package began as an exploration in generalizing `Base.Fix1` and `Base.Fix2`.
-These types are ways to represent a particular forms of anonymous functions.
-Let's illustrate. We'll use the `string` function in `Base`, which concatenates the string representations of its arguments:
+These types represent particular forms of functions:
+`x -> f(v, x)` and `x -> f(x, v)` for a given `f` and `v`.
+We'll pick up that motivation shortly.
+
+There is a secondary motivation for this package,
+aligned with the philosophy that [choosing names is hard](https://martinfowler.com/bliki/TwoHardThings.html),
+and that a long name may be avoided when concepts are further broken down:
+
+> If you need underscores, it most likely means that you can work harder to find a better name, or perhaps that you are mixing together two concepts that should be separated.
+[(source)](https://discourse.julialang.org/t/naming-remove-all-underscores-to-matter-what/8549/12)
+
+There are a lot of great names within the Julia ecosystem, and meaning is important:
+
+> With multiple dispatch, just as the meaning of a function is important to get consistent, it's also important to get the meanings of the argument slots consistent when possible.
+[(source)](https://github.com/JuliaLang/julia/pull/34296#issuecomment-575299420)
+
+This package can help to re-use these names and put them together in new ways. Crucially, it relies on parametric types, the same facility that allows `Vector{Int64}` and `Vector{Float32}` to be given "orthogonal" names, instead of requiring names that bake together the concept of "vector" and  "element type".
+
+# Introduction
+Let's illustrate `Fix1` and `Fix2`. We'll use the `string` function in `Base`, which concatenates the string representations of its arguments:
 
 ```@repl
 string("first ", "second")
@@ -158,8 +177,9 @@ end
 
 and might also require a separation of the purposes of `collect` and `map`. See [this issue](https://github.com/JuliaLang/julia/issues/39628).
 
-Many types in `Base.Iterators` can be seen as lazy calls of existing functions. `Base.Iterators.Filter(flt, itr)` could be replaced with `@xquote filter(flt, itr)`.
-And the dispatches done on these types to enable the existing symbolic computation,
+Many types in `Base.Iterators` can be seen as lazy calls of existing functions.
+For example `Base.Iterators.Filter(flt, itr)` could be replaced with `@xquote filter(flt, itr)`.
+`Base.Iterators.Filter` would be an alias for `(@xquoteT filter(::F, ::I)) where {F, I}` to enable the existing symbolic computation,
 [e.g.](https://github.com/JuliaLang/julia/blob/ef14131db321f8f5a815dd05a5385b5b27d87d8f/base/iterators.jl#L463):
 
 ```julia
@@ -240,6 +260,7 @@ They have to be named since there is nothing else that gives the fields any mean
 In our type, however, they can be distinguished by the role they play with respect to the `/` function.
 
 ## Fixed-Point Numbers and "static" arguments
+Replacing `Rational` may be silly, but it leads to an additional generalization of our type.
 A fixed-point number is just a rational number with a specified denominator.
 If we have a large array of fixed-point numbers with the same denominator, we certainly do not want to store the denominator repeatedly.
 
@@ -285,7 +306,7 @@ look_inside_2(x, y) = MyQ0f7(x) + MyQ0f7(y)
 ```
 
 ## Pure-imaginary type and `Base.Complex`
-Now that we can make some arguments static, we can introduce a meaningful example where the lazy call might not be valid to begin with.
+Now that we can make some arguments static, we can introduce a meaningful example where the lazy call does not correspond to a valid eager call.
 You can define a type such that `xeval` raises `MethodError` and still represent the computation symbolically.
 You can define a type `A` in terms of a function `f` and a type `B` even if it may not make sense to define a new method of `f` on `B`.
 
