@@ -1,7 +1,9 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 FixArgs = "5d8a8d4b-09a6-4f10-9cda-cb42fab7536d"
 FrankenTuples = "7e584817-dab4-53a9-9a51-4037a36b0ad0"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
