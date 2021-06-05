@@ -1,5 +1,6 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 FixArgs = "5d8a8d4b-09a6-4f10-9cda-cb42fab7536d"
 FrankenTuples = "7e584817-dab4-53a9-9a51-4037a36b0ad0"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
