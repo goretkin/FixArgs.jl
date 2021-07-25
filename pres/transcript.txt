@@ -1,0 +1,110 @@
+Hi, my name is Gustavo Nunes Goretkin and I want to discuss this idea of using a function as a name, instead of invoking or calling it.
+
+I am going to demonstrate this experimental package called FixArgs that showcases some of these patterns.
+
+The point of the talk is to focus on the idea rather than the specific implementation in FixArgs.
+
+To get started, let's use an example based on vcat, which is how we concatenate vectors.
+
+To concatenate a vector of vectors, we can use the higher-order function `reduce` with `vcat`.
+
+Let's repeat that same computation, but instead of using `vcat` directly, we'll use it via an anonymous function.
+
+In this case, overall the first call is 500 times faster. Why?
+It's because there's totally different code running in each case.
+
+If we look at the methods of reduce, we see that there is a special case.
+
+There are two key features that together enable the reduce vcat special case.
+
+One is that we have multiple dispatch, which allows the method to exist in the first place.
+And the second is that functions are encoded in the type domain. Each function is its own type.
+
+Without this, we might need reduce underscore vcat, or a more familiar name such as flatten.
+
+I think the first spelling is better because it combines existing names reduce and vcat in a meaningful way, instead of creating an ad-hoc name.
+
+Note that the method might not call `vcat`. `vcat` is used as a name.
+
+And this matters because, more so than in other ecosystems, the Julia community aims to determine a generic meaning for function names.
+This is difficult and fundamental design work, and the care taken here is what makes generic programming as successful as it is in Julia.
+Naming things is hard, and it would be wise to reuse these names as much as possible.
+
+Let's talk about `Base.Fix2`, using `==`, this two-argument function.
+So, we're going to define `f1` and `f2`. For the same input, they give the same output, which is whether the argument equals 50.
+Notice that the type of `f1` is this `Fix2` type, which itself mentions `==` and the type of 50.
+`f2` just has this name, which I guess is the 7th anonymous function defined.
+We want `f1` and `f2` to behave identically, and when passed to `findfirst`, they give the same result. But I can tell you that this first use is a constant-time operation, and this second use is linear in the number of elements in this range.
+
+And the reason this happens is because there is a `findfirst` method special case. It's definition is what you expect.
+
+This is one thing I love about Julia. You can imagine a plotting library that supports axis ticks. You can use an object like this to represent evenly-spaced ticks, or use a `Vector` to represent arbitrary ticks.
+
+Code written in terms of `findfirst` and other functions like it can support both types of ticks, and it will be efficient for the evenly-spaced ticks and still work for the general case.
+
+So Fix1 and Fix2 fix respectively the first or second argument of a two-argument function. The package we're discussing here provides a generalization in a few ways.
+
+The function can have any number of arguments and any pattern of them can be fixed.
+The keyword arguments can be bound
+We can represent call expressions on their own, not just partially-applied functions.
+
+So a quick example of where fixing keyword arguments is useful is in `isapprox`. All other partially-applied functions in `Base`. use `Fix2`, but this one has keyword arguments and so it just gets this lambda function.
+
+So, do we want to encode lambda calculus in types in Julia? Is it ever useful to fix all of the arguments of a function?
+The answer to me is definitely yes!
+Let's consider the division function. If you fix its two arguments, to me it looks a lot like a rational number.
+Said differently, a rational number is kind of like lazy division.
+
+So here we'll start using the package actually.
+
+This is how we could encode the rational 1 over 2.
+...
+
+If we multiply two of these objects together, we get a method error.
+
+We can define a method using some helpful macros.
+Here is an example definition of how to multiply an S divided by S by an S divided by S.
+
+Now when we do a half times half we get a representation of a quarter.
+
+Note that the dollar sign is used to force evaluation, without it we would get.
+
+In Base, the connection between the `Rational` type and division happens in this method.
+
+In FixArgs, you can use this `xeval` function which evaluates the form. So the type itself already encodes that it is the division of two things.
+
+So I want to compare some low-level details. First of all, the size of this object is the same as the corresponding `Rational{Int}`. Even the memory layout is identical.
+Let's look at the code that's generated to convert this rational to a float. It's also identical.
+
+That said, it's not a drop-in replacement for Rational because `Rational` is a subtype of `Number`, and this `FixArgs.Call` object is not.
+
+So replacing Base.Rational with this is probably silly and confusing, but there are some possible benefits.
+
+Some users want to have different types for the numerator and the denominator.
+
+A perfect example of this is fixed point numbers, where the denominator is a "static" number encoded in the type.
+
+There are more examples in the documentation, but I'll give you a quick look that we can use this quadruple colon S to mark this as static, and then the value here is in the type domain.
+
+There is a kind of combination of structural and nominal typing here, because you can avoid choosing names like `Rational`, `num` and `den`. The arguments can be distinguished by the role they play with respect to the function. Only the function needs a name, and the rest is determined structurally.
+
+The same point can be made differently. So if we xquote an identity function, we get this value every single time.
+
+That's different from defining anonymous functions in Julia because these two do not compare the same, even though they are structurally identical.
+
+And in case you're wondering, FixArgs does support all sorts of nested lambda expressions correctly, as you'd hope.
+
+So what are some existing patterns that this relates to? Now, any eager function has a lazy representation.
+
+So Base.Generator could be a lazy representation of `map`.
+
+Also, there are a bunch of types in the Iterators module that correspond to lazy evaluations of functions.
+
+Another way that this pattern shows up is with `literal_pow`.
+Instead of lowering to this, it could lower to something like this, where the static annotation shows up again. And then you just xeval that form.
+
+The pattern of setting up a computation and then evaluating it is what happens with broadcasting, where instead of `xeval`, there is a `materialize` call.
+
+I'm going to quickly jump through some slides that show the same pattern in other packages.
+
+Note that this is different than using the expression type in Base. When we quote x divided by y, we get a bunch of `Symbol`s, but when using xquote, we actually evaluate the x, the y, and the function.
