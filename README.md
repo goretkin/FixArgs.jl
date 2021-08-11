@@ -15,6 +15,6 @@ Related features in other languages:
 - [Python's functools.partial](https://docs.python.org/3/library/functools.html#functools.partial)
 
 ## Video
-A lightning talk about this package was predented at JuliaCon 2021.
+A lightning talk about this package was presented at JuliaCon 2021.
 
 [![JuliaCon 2021 talk recording](https://img.youtube.com/vi/9GseaBzoNj8/0.jpg)](https://www.youtube.com/watch?v=9GseaBzoNj8)
