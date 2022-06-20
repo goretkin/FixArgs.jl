@@ -218,7 +218,7 @@ function fix(f, args...; kwargs...)
     _get(::Val{i}) where {i} = i - 1
 
     (_pos_call_args, _arity) = assemble(args, fix_some)
-    call_args = FrankenTuple(_pos_call_args, map(Some, kwargs.data))
+    call_args = FrankenTuple(_pos_call_args, map(Some, values(kwargs)))
 
     Lambda(
         Arity{_get(_arity), Nothing}(),
