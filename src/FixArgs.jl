@@ -12,7 +12,7 @@ include("expr.jl")
 include("show.jl")
 include("types.jl")
 include("eval.jl")
-include("TypedExpressions.jl")
+include("expr-to-lambda-call.jl")
 include("uneval.jl")
 include("ergonomics.jl")
 
