@@ -60,7 +60,8 @@ function normalize_bound_vars(ex)
     ex1 = relabel_args(
         x -> x isa BoundSymbol,
         relabeler,
-    ex)
+        ex
+    )
 
     # replace all heads, which should all be placeholders with `Arity`
     # TODO ensure all heads were replaced (any heads without all placeholders is an error at this point)
