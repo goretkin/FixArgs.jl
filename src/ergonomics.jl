@@ -173,7 +173,7 @@ function _xquote(ex)
     # `BoundSymbol{::Symbol}` comes to represent bound variables in the λ calculus
     ex3 = escape_all_but(ex2)
     ex4 = normalize_bound_vars(ex3)
-    value = lc_expr2(ex4)
+    value = lc_expr(ex4)
     return value
 end
 
