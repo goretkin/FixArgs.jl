@@ -8,6 +8,13 @@ This package aims to generalize `Base.Fix1` and `Base.Fix2` for arbitrary functi
 `Fix` can also include keyword arguments.
 One day, parts of this package may be included in Julia's `Base` itself; see [issue #36181](https://github.com/JuliaLang/julia/issues/36181).
 
+See the documentation for more detail and examples.
+
 Related features in other languages:
 - [C++'s std::bind](https://en.cppreference.com/w/cpp/utility/functional/bind)
 - [Python's functools.partial](https://docs.python.org/3/library/functools.html#functools.partial)
+
+## Video
+A lightning talk about this package was presented at JuliaCon 2021.
+
+[![JuliaCon 2021 talk recording](https://img.youtube.com/vi/9GseaBzoNj8/0.jpg)](https://www.youtube.com/watch?v=9GseaBzoNj8)
