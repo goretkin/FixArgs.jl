@@ -33,9 +33,24 @@ function xeval(c::Lambda, ctx::Context)
     )
 end
 
+# See https://github.com/ararslan/FrankenTuples.jl/issues/2#issuecomment-1170322427
+# I want `map(f, ::FrankenTuple)` to behave like `map(f, ::NamedTuple)`
+# so I define `_map` that does.
+# If `FrankenTuple` includes an updated definition of `map` with the given property, then it can be removed.
+_map(args...) = map(args...)
+
+# Copy from https://github.com/goretkin/FrankenTuples.jl/commit/ebc3a71837b6272d5dbb09657527757cc39170cc
+# NOTE: this method signature makes sure we don't define map(f)
+function _map(f, ft::FrankenTuple, fts::FrankenTuple...)
+    t = map(f, Tuple(ft), map(Tuple, fts)...)
+    nt = map(f, NamedTuple(ft), map(NamedTuple, fts)...)
+    FrankenTuple(t, nt)
+end
+
+
 # kwargs should work with Base.map(f, ::FrankenTuple)
 # TODO: define `Splat{T}` to represent e.g. `@xquote x -> foo(x...)`
-_xeval_call_args(c::Call, ctx::Context) = map(x -> xeval(x, ctx), c.args)
+_xeval_call_args(c::Call, ctx::Context) = _map(x -> xeval(x, ctx), c.args)
 
 function xeval(c::Call, ctx::Context)
     #println("xeval(::Call, ::Context) : $(c)")
@@ -56,7 +71,7 @@ some_esc(old::ArgPos, new::ArgPos) = new
 some_esc(old::ParentScope, new::ParentScope) = new
 some_esc(old::Call, new::Call) = new
 
-_xeval_call_args_esc(c::Call, ctx::Context) = map(x -> some_esc(x, xeval_esc(x, ctx)), c.args)   # TODO kwargs
+_xeval_call_args_esc(c::Call, ctx::Context) = _map(x -> some_esc(x, xeval_esc(x, ctx)), c.args)   # TODO kwargs
 
 function xeval(c::Call, ctx::Context{Nothing, P}) where P
     #println("xeval(::Call, ::Context{Nothing, ...}) : $(c)")

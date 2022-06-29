@@ -3,6 +3,14 @@ using FixArgs: @quote_some, @xquote, relabel_args
 using Test: @test, @test_broken, @testset, @inferred, @test_throws
 using MacroTools: @capture
 
+# copied from https://github.com/goretkin/FrankenTuples.jl/commit/ebc3a71837b6272d5dbb09657527757cc39170cc
+@testset "FrankenTuple _map" begin
+    FrankenTuple = FixArgs.FrankenTuple
+    @test FrankenTuple((11,22), (x=33,y=44)) == FixArgs._map(+, FrankenTuple((1,2), (x=3,y=4)), FrankenTuple((10, 20), (x=30,y=40)))
+    @test_throws Exception FixArgs._map(+, FrankenTuple((1,2), (x=3,y=4)), FrankenTuple((10, 20), (x=30,)))
+    @test_throws Exception FixArgs._map(+, FrankenTuple((1,2), (x=3,y=4)), FrankenTuple((10,), (x=30,y=40)))
+end
+
 @testset "relabel_args" begin
     let ex = relabel_args(x -> x isa Symbol, x -> Symbol(string(x)), :(x -> (y -> x + y)))
         @capture ex arg1_ -> (arg2_ -> term1_ + term2_)
