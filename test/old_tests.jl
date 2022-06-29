@@ -32,7 +32,7 @@ using Test: @test, @test_broken, @testset, @inferred, @test_throws
     @test  (@fix ≈(_,_;kw...))(1,2)
     @test !(@fix ≈(_,_;kw...))(1,2.1)
 
-    f(args...; kw...) = (args, kw.data)
+    f(args...; kw...) = (args, values(kw))
     @test (@fix f(1, _, 3, x=1, y=2))(2) === ((1,2,3),(x=1,y=2))
     kw = (x=1, y=42)
     #@test (@fix f(1, _, 3; kw...))(2, y=2) === ((1,2,3),(x=1,y=2))
