@@ -271,7 +271,7 @@ function parse_type_spec(ex)
     dc = _parse_double_colon(ex)
     (!isnothing).(dc) == (false, true) && return (something(dc[2]), Some)
     (!isnothing).(dc) == (true, false, true) && something(dc[3]) === :S && return (something(dc[1]), Val)
-    throw(Base.Meta.ParseError("expected a `::T`, got $ex"))
+    throw(Meta.ParseError("expected a `::T`, got $ex"))
 end
 
 """
@@ -297,7 +297,7 @@ FixArgs.Call{Some{typeof(string)},FrankenTuples.FrankenTuple{Tuple{Val{123}},(),
 ```
 """
 macro xquoteT(ex)
-    Meta.isexpr(ex, :call) || throw(Base.Meta.ParseError("This macro is only implemented for call expressions. Got $ex"))
+    Meta.isexpr(ex, :call) || throw(Meta.ParseError("This macro is only implemented for call expressions. Got $ex"))
     try
         f = ex.args[1]
         arg_types = map(parse_type_spec, ex.args[2:end])
@@ -308,7 +308,7 @@ macro xquoteT(ex)
         #return :(($(Fix)){$(esc(f_ex)), $(esc(args)), $(esc(kw))})
         return :(Call{Some{$(f_ex)}, $(call_args)})
     catch err
-        err isa Base.Meta.ParseError || rethrow(err)
-        throw(Base.Meta.ParseError("expected e.g. `f(::S, ::T)`, got $ex. Detail: $(err.msg)"))
+        err isa Meta.ParseError || rethrow(err)
+        throw(Meta.ParseError("expected e.g. `f(::S, ::T)`, got $ex. Detail: $(err.msg)"))
     end
 end
