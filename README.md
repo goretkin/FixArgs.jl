@@ -18,3 +18,24 @@ Related features in other languages:
 A lightning talk about this package was presented at JuliaCon 2021.
 
 [![JuliaCon 2021 talk recording](https://img.youtube.com/vi/9GseaBzoNj8/0.jpg)](https://www.youtube.com/watch?v=9GseaBzoNj8)
+
+## Development
+
+### Julia line coverage information in VS Code
+
+First generate `.cov` files:
+```julia
+using Pkg
+Pkg.test("FixArgs"; coverage=true)
+```
+
+Then
+```julia
+using Coverage
+coverage = process_folder()
+open("lcov.info", "w") do io
+    LCOV.write(io, coverage)
+end;
+```
+
+Finally, Open a source file in VS Code and run the command "Coverage Gutters: Display Coverage" in the VS Code Command Pallet.
