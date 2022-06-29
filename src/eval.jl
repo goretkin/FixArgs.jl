@@ -75,9 +75,9 @@ _xeval_call_args_esc(c::Call, ctx::Context) = _map(x -> some_esc(x, xeval_esc(x,
 
 function xeval(c::Call, ctx::Context{Nothing, P}) where P
     #println("xeval(::Call, ::Context{Nothing, ...}) : $(c)")
-    # this was invoked by `xeval(::Lambda, ...)`
+    # this was invoked by `xeval(some_lambda::Lambda, ...)`
     # which means we are not going to call `c.f`
-    # since the `Call` could contain unevaluated terms
+    # since the `Call` could contain unevaluated terms (those corresponding to the formal arguments of `some_lambda`)
     # TODO evaluate if possible? explore different evaluation schemes.
     # TODO do not special-case this behavior, instead just detect unevaluated terms.
     Call(

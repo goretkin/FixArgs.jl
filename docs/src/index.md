@@ -260,17 +260,17 @@ They have to be named since there is nothing else that gives the fields any mean
 In our type, however, they can be distinguished by the role they play with respect to the `/` function.
 
 ## Fixed-Point Numbers and "static" arguments
-Replacing `Rational` may be silly, but it leads to an additional generalization of our type.
-A fixed-point number is just a rational number with a specified denominator.
+Replacing `Rational` may be silly, but this approach comes with a benefit: it also generalizes fixed-point numbers.
+A fixed-point number is just a lazy division with a specified (i.e. "static") denominator.
+
 If we have a large array of fixed-point numbers with the same denominator, we certainly do not want to store the denominator repeatedly.
+Furthermore, we want efficient arithmetic.
+There is no need to check for a common denominator (let alone find one) if the two denominators are known to be equal at code-generation time.
 
-And we also want to efficient code to be generated for arithmetic.
+There are values that we can "bake in" (see `Base.isbitstype`) into the type of `Call` itself!
 
-So we can "bake in" some values (see `Base.isbitstype`) into the type of `Call` itself!
-
-In other words, what is a fixed-point number but lazy division with a static denominator?
-Here is an example that models `Fixed{Int8,7}` from [`FixedPointNumbers.jl`](https://github.com/JuliaMath/FixedPointNumbers.jl).
-The macros use the notation `V::::S` to mark an argument `V` as "static".
+Here is an example that models `FixedPointNumbers.Fixed{Int8,7}` from [`FixedPointNumbers.jl`](https://github.com/JuliaMath/FixedPointNumbers.jl).
+The macros use the notation `V::::S` (quadruple colon) to mark an argument `V` as "static".
 Also note the use of `$` to escape subexpressions.
 
 ```@repl FixedPoint
