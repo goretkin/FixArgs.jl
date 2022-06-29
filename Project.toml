@@ -1,7 +1,7 @@
 name = "FixArgs"
 uuid = "5d8a8d4b-09a6-4f10-9cda-cb42fab7536d"
 authors = ["Gustavo Goretkin <gustavo.goretkin@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 ExprParsers = "c5caad1f-83bd-4ce8-ac8e-4b29921e994e"
