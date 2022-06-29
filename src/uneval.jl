@@ -28,14 +28,6 @@ end
 uneval(x) = Meta.quot(x)
 # uneval(x) = Meta.QuoteNode(x)
 
-function uneval(x::TypedExpr)
-    # the `TypedExpr` below is assumed to be available in the scope
-    :(TypedExpr(
-        $(uneval(x.head)),
-        $(uneval(x.args))
-    ))
-end
-
 function uneval(x::Val{T}) where T
     # assumed to be available in the scope
     :(Val($(uneval(T))))
