@@ -34,13 +34,18 @@ function parse_lambda(ex)
     return nothing
 end
 
+function findonly(f, v)
+    rs = findall(f, v)
+    length(rs) == 0 && return nothing
+    length(rs) == 1 && return only(rs)
+    error("multiple matches: $(rs)")
+end
+
 function get_label(labeler, labels_stack, sym, referent_depth)
     for (antecedent_depth, labels) = reverse(collect(enumerate(labels_stack)))
-        ns = findall(==(sym), labels)
-        length(ns) == 0 && continue
-        arg_i = only(ns)
-        length(ns) == 1 && return labeler((; referent_depth, antecedent_depth, arg_i, sym))
-        error("multiple arguments match $sym")
+        arg_i = findonly(==(sym), labels)
+        arg_i === nothing && continue
+        return labeler((; referent_depth, antecedent_depth, arg_i, sym))
     end
     return sym
 end
@@ -88,81 +93,3 @@ function relabel_args(is_symbol, labeler, ex, labels_stack = [], this_depth = 1)
 
     return ex   # LineNumberNode, etc.
 end
-
-function findonly(f, v)
-    rs = findall(f, v)
-    length(rs) == 0 && return nothing
-    length(rs) == 1 && return only(rs)
-    error("multiple matches: $(rs)")
-end
-
-test_lambdas = [
-    (
-        :(() -> /(1, 2)),
-        missing
-    ),
-    (
-        :(y -> *(x, y)),
-        missing
-    ),
-    (
-        :(x -> x),
-        missing
-    ),
-    (
-        :(x -> f(() -> x)),
-        missing
-    ),
-    (
-        :((f, x) -> f(() -> x)),
-        missing
-    ),
-    (
-        :(x -> f(x)),
-        missing # technically contains more information than just `f`, because it limits it to being a 1-arg
-    ),
-    (
-        :((x...) -> f(x...)),
-        missing # throw an error
-    ),
-    (
-        :(() -> g(x)),
-        missing
-    ),
-    (
-        :(x -> f(() -> g(x))),
-        missing
-    ),
-    (
-        :((f, x) -> f(x)),
-        missing
-    ),
-    (
-        :((f, x) -> f(() -> identity(x))),
-        missing
-    ),
-    (
-        :((f, x) -> f(identity(x))),
-        missing
-    ),
-    (
-        :(x -> (y -> *(x, y))),
-        missing
-    ),
-    (
-        :((x, z) -> map(y -> *(x, y), z)),
-        missing
-    ),
-    (
-        :((x, y) -> f(x, g(y))),
-        missing
-    ),
-    (
-        :((x, y) -> f(x, () -> g(y))),
-        missing
-    ),
-    (
-        :((x, y, z) -> f(g(x, y), h(x, z))),
-        missing
-    ),
-]
