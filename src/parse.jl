@@ -57,8 +57,6 @@ end
 `x.referent_depth - x.antecedent_depth` is number of `->`s that are between the evaluation site and the definition site
 """
 function relabel_args(is_symbol, labeler, ex, labels_stack = [], this_depth = 1)
-    # TODO consider using this pattern: https://www.cs.cornell.edu/~asampson/blog/functioninheritance.html
-
     is_symbol(ex) && return get_label(labeler, labels_stack, ex, this_depth)
 
     next_depth = this_depth
