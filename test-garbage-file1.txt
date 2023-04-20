@@ -1,0 +1,9 @@
+I made a mistake at part 4.
+
+I did 
+
+gt branch create -a -m "part 4 of graphite testing, modifying the contents of a file made in part 2"
+
+but the instructions said to do
+
+gt commit create -a -m "part 4 of graphite testing, modifying the contents of a file made in part 2"
